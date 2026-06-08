@@ -202,7 +202,7 @@
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw6Eqowk7rhPhGqskLfOdbW7Pa3Ksi_YJbLKIAHKOKJkBnvXcydJZmmNsGomVM1ZyalIA/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzzHWp_GhwO1f30YxoYW_g7XTOnPX4QgGluYePl5_OEdYgJGEypWXJi84n5uABxB7sBNg/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -492,14 +492,17 @@
         idToken: idToken,
         answers: JSON.stringify(answers),
       });
-      // GAS ไม่รองรับ CORS header → ใช้ no-cors แล้วแสดง success เลย
-      // (GAS จะรับข้อมูลและบันทึก Sheet แม้จะ no-cors)
-      await fetch(GAS_URL + "?" + params.toString(), { mode: "no-cors" });
+      // ใช้ JSONP submit เพื่อเลี่ยง CORS
+      const result = await submitViaJSONP(GAS_URL + "?" + params.toString());
 
       document.getElementById("loadingSection").style.display = "none";
-      document.getElementById("successMsg").textContent = flow.ack.replace(/\n/g, " ");
-      document.getElementById("refBadge").textContent   = "กำลังดำเนินการค่ะ";
-      document.getElementById("successSection").style.display = "block";
+      if (result && result.status === "ok") {
+        document.getElementById("successMsg").textContent = flow.ack.replace(/\n/g, " ");
+        document.getElementById("refBadge").textContent   = "เลขที่: " + (result.refNo || "-");
+        document.getElementById("successSection").style.display = "block";
+      } else {
+        throw new Error("Server error");
+      }
     } catch(err) {
       document.getElementById("loadingSection").style.display = "none";
       document.getElementById("formSection").style.display    = "block";
@@ -508,6 +511,35 @@
   }
 
   // ดึง UserProfile จาก GAS หลัง LIFF login เสร็จ
+  // JSONP submit
+  function submitViaJSONP(url) {
+    return new Promise(function(resolve, reject) {
+      const cbName = "gasSubmit_" + Date.now();
+      const timeout = setTimeout(function() {
+        delete window[cbName];
+        reject(new Error("timeout"));
+      }, 15000);
+
+      window[cbName] = function(data) {
+        clearTimeout(timeout);
+        delete window[cbName];
+        const s = document.getElementById("submitScript");
+        if (s) s.remove();
+        resolve(data);
+      };
+
+      const script = document.createElement("script");
+      script.id  = "submitScript";
+      script.src = url + "&callback=" + cbName;
+      script.onerror = function() {
+        clearTimeout(timeout);
+        delete window[cbName];
+        reject(new Error("script error"));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   // ใช้ JSONP แทน fetch เพื่อเลี่ยง CORS
   function fetchAndAutoFill(uid) {
     if (!uid) return;
@@ -559,8 +591,21 @@
   }
 
   function closeLiff() {
-    if (liff.isInClient()) { liff.closeWindow(); }
-    else { window.close(); }
+    try {
+      if (liff.isInClient()) {
+        liff.closeWindow();
+      } else {
+        window.close();
+        // fallback ถ้า window.close() ไม่ทำงาน
+        setTimeout(function() {
+          document.getElementById("successSection").style.display = "none";
+          document.getElementById("formSection").style.display    = "block";
+          renderForm();
+        }, 500);
+      }
+    } catch(e) {
+      window.close();
+    }
   }
 
   window.addEventListener("load", init);
