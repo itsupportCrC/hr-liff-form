@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HR One Stop Service</title>
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Sarabun', sans-serif; background: #f0f4f8; min-height: 100vh; padding-bottom: 40px; }
+    .header { background: #1A6B1A; color: white; padding: 20px 16px 16px; text-align: center; }
+    .header .icon { font-size: 2rem; margin-bottom: 4px; }
+    .header h1 { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
+    .header p { font-size: 0.82rem; opacity: 0.85; }
+    .card { background: white; margin: 16px; border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); overflow: hidden; }
+    .card-header { background: #f8fdf8; border-bottom: 1px solid #e8f5e8; padding: 14px 16px; font-size: 0.85rem; color: #1A6B1A; font-weight: 600; }
+    .card-body { padding: 16px; }
+    .field { margin-bottom: 16px; }
+    .field label { display: block; font-size: 0.85rem; font-weight: 600; color: #333; margin-bottom: 6px; }
+    .field label .required { color: #e53e3e; margin-left: 2px; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 11px 13px; border: 1.5px solid #ddd; border-radius: 10px;
+      font-size: 0.92rem; font-family: inherit; color: #333; background: #fafafa;
+      -webkit-appearance: none; appearance: none;
+    }
+    .field select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; }
+    .field textarea { height: 90px; resize: none; }
+    .field.error input, .field.error select, .field.error textarea { border-color: #e53e3e; }
+    .field .error-msg { color: #e53e3e; font-size: 0.78rem; margin-top: 4px; display: none; }
+    .field.error .error-msg { display: block; }
+    /* Photo Upload */
+    .photo-section { margin: 0 16px 16px; }
+    .photo-section h3 { font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 10px; }
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .photo-slot { border: 2px dashed #ddd; border-radius: 10px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; background: #fafafa; }
+    .photo-slot input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-slot .placeholder { font-size: 1.8rem; color: #ccc; }
+    .photo-slot .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: none; }
+    .photo-slot.has-image .remove-btn { display: flex; align-items: center; justify-content: center; }
+    .btn-submit { display: block; width: calc(100% - 32px); margin: 0 16px 16px; padding: 15px; background: #1A6B1A; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer; }
+    .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+    .loading { display: none; text-align: center; padding: 40px 16px; color: #666; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #eee; border-top-color: #1A6B1A; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress-text { font-size: 0.82rem; color: #888; margin-top: 8px; }
+    .success-wrap { display: none; text-align: center; padding: 40px 24px; }
+    .success-icon { font-size: 3.5rem; margin-bottom: 12px; }
+    .success-wrap h2 { color: #1A6B1A; font-size: 1.2rem; margin-bottom: 8px; }
+    .success-wrap p { color: #666; font-size: 0.88rem; line-height: 1.6; }
+    .ref-badge { display: inline-block; background: #f0f9f0; border: 1px solid #c6e6c6; color: #1A6B1A; font-size: 0.82rem; font-weight: 700; padding: 6px 14px; border-radius: 20px; margin-top: 12px; }
+    .btn-close { display: block; width: 100%; margin-top: 20px; padding: 12px; background: #1A6B1A; color: white; border: none; border-radius: 10px; font-size: 0.95rem; font-family: inherit; cursor: pointer; }
+    .error-page { display: none; text-align: center; padding: 40px 24px; }
+    .error-page .icon { font-size: 3rem; margin-bottom: 12px; }
+    .error-page p { color: #666; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="icon" id="headerIcon">📋</div>
+  <h1 id="headerTitle">HR One Stop Service</h1>
+  <p>ฝ่ายบุคคลยินดีให้บริการค่ะ</p>
+</div>
+
+<div id="formSection" style="display:none;">
+  <div class="card">
+    <div class="card-header" id="formTitle">กรุณากรอกข้อมูลให้ครบถ้วนค่ะ</div>
+    <div class="card-body" id="formFields"></div>
+  </div>
+  <div id="photoSection" class="photo-section" style="display:none;">
+    <h3>📷 แนบรูปอุบัติเหตุ (สูงสุด 4 รูป)</h3>
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+  <button class="btn-submit" onclick="submitForm()">✅ ยืนยันการส่ง</button>
+</div>
+
+<div class="loading" id="loadingSection">
+  <div class="spinner"></div>
+  <p id="loadingText">กำลังโหลด กรุณารอสักครู่...</p>
+  <p class="progress-text" id="progressText"></p>
+</div>
+
+<div class="card" id="successSection" style="display:none; margin:16px;">
+  <div class="success-wrap" style="display:block;">
+    <div class="success-icon">✅</div>
+    <h2>ส่งสำเร็จแล้วค่ะ!</h2>
+    <p id="successMsg"></p>
+    <div class="ref-badge" id="refBadge"></div>
+    <button class="btn-close" onclick="closeLiff()">ปิดหน้าต่างนี้</button>
+  </div>
+</div>
+
+<div class="card" id="errorPage" style="display:none; margin:16px;">
+  <div class="error-page" style="display:block;">
+    <div class="icon">⚠️</div>
+    <p id="errorMsg">ไม่พบข้อมูลฟอร์มที่ต้องการ<br>กรุณากดปุ่มจาก Rich Menu อีกครั้งค่ะ</p>
+  </div>
+</div>
+
+<script>
+  const LIFF_ID   = "2010288695-pPKXCZPa";
+  let FLOWS = null;
+  let COMPANY_BRANCH = null;
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxb5seM30crVCQBcAFYf9TAFa_h5JefMJ4DvX5sD2eOVNU5Tc118u6zzAFT927YQ0inAg/exec";
+  let userProfile = {};
+  const GAS_TOPIC = "";
+
+  let userId    = "";
+  let idToken   = "";
+  let TOPIC     = "";
+  let liffReady = false;
+  const photoFiles = [null, null, null, null];
+
+  function findTopic() {
+    if (GAS_TOPIC && GAS_TOPIC.trim()) return GAS_TOPIC.trim();
+    const s = new URLSearchParams(window.location.search);
+    if (s.get("topic")) return s.get("topic");
+    const ls = s.get("liff.state") || "";
+    if (ls) {
+      try {
+        const m = decodeURIComponent(ls).match(/topic=(\d+)/);
+        if (m) return m[1];
+      } catch(e) {}
+    }
+    return "";
+  }
+
+  function withTimeout(p, ms) {
+    return Promise.race([p, new Promise(function(_, r) {
+      setTimeout(function() { r(new Error("timeout")); }, ms);
+    })]);
+  }
+
+  async function init() {
+    document.getElementById("loadingSection").style.display = "block";
+    TOPIC = findTopic();
+
+    const failsafe = setTimeout(function() {
+      if (!liffReady) {
+        console.warn("LIFF timeout — no userId");
+        showForm();
+      }
+    }, 7000);
+
+    try {
+      await withTimeout(liff.init({ liffId: LIFF_ID }), 6000);
+
+      if (!liff.isLoggedIn()) {
+        clearTimeout(failsafe);
+        liff.login({ redirectUri: window.location.href });
+        return;
+      }
+
+      // วิธี 1: IDToken (เร็วที่สุด)
+      try {
+        idToken = liff.getIDToken() || "";
+        if (idToken) {
+          const decoded = liff.getDecodedIDToken();
+          if (decoded && decoded.sub) {
+            userId = decoded.sub;
+            console.log("userId IDToken:", userId);
+          }
+        }
+      } catch(te) { console.warn("IDToken:", te); }
+
+      // วิธี 2: getProfile fallback
+      if (!userId) {
+        try {
+          const profile = await withTimeout(liff.getProfile(), 5000);
+          userId = profile.userId || "";
+          idToken = liff.getIDToken() || idToken;
+          console.log("userId profile:", userId);
+        } catch(pe) { console.warn("getProfile:", pe); }
+      }
+
+    } catch(e) {
+      console.warn("LIFF:", e.message || e);
+    }
+
+    clearTimeout(failsafe);
+    showForm();
+  }
+
+  function showForm() {
+    if (liffReady) return;
+    liffReady = true;
+    document.getElementById("loadingSection").style.display = "none";
+    if (!TOPIC || !FLOWS[TOPIC]) {
+      document.getElementById("errorPage").style.display = "block";
+      return;
+    }
+    document.getElementById("formSection").style.display = "block";
+    renderForm();
+
+    // Auto-fill: ดึง UserProfile จาก GAS ด้วย userId ที่ได้จาก LIFF
+    if (userId) {
+      fetchAndAutoFill(userId);
+    } else if (userProfile && userProfile["รหัสพนักงาน"]) {
+      autoFillFromProfile(userProfile);
+    }
+  }
+
+  function renderForm() {
+    const flow = FLOWS[TOPIC];
+    document.getElementById("headerIcon").textContent  = flow.icon;
+    document.getElementById("headerTitle").textContent = flow.title;
+    document.getElementById("formTitle").textContent   = flow.title + " — กรอกข้อมูลค่ะ";
+
+    const container = document.getElementById("formFields");
+    container.innerHTML = "";
+
+    flow.fields.forEach(function(field, i) {
+      const div = document.createElement("div");
+      div.className = "field";
+      div.id = "field_" + i;
+
+      let input = "";
+
+      if (field.type === "company") {
+        const opts = Object.keys(COMPANY_BRANCH).map(function(c) {
+          return '<option value="' + c + '">' + c + '</option>';
+        }).join("");
+        input = '<select id="f_' + i + '" onchange="onCompanyChange()">'
+          + '<option value="">— กรุณาเลือกบริษัท —</option>' + opts + '</select>';
+
+      } else if (field.type === "branch") {
+        input = '<select id="f_' + i + '" id="branchSelect">'
+          + '<option value="">— เลือกบริษัทก่อน —</option></select>';
+
+      } else if (field.type === "select") {
+        const opts = field.opts.map(function(o) {
+          return '<option value="' + o + '">' + o + '</option>';
+        }).join("");
+        input = '<select id="f_' + i + '"><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
+
+      } else if (field.type === "textarea") {
+        input = '<textarea id="f_' + i + '" placeholder="' + (field.placeholder || "") + '"></textarea>';
+
+      } else {
+        input = '<input type="' + (field.type || "text") + '" id="f_' + i + '" placeholder="' + (field.placeholder || "") + '">';
+      }
+
+      const isRequired = field.type !== "branch" || Object.values(COMPANY_BRANCH).some(function(b) { return b.length > 0; });
+      div.innerHTML = '<label>' + field.label
+        + (field.type !== "branch" ? ' <span class="required">*</span>' : ' <span style="color:#888;font-size:0.8rem">(ถ้ามี)</span>')
+        + '</label>' + input + '<div class="error-msg">กรุณากรอกข้อมูลนี้ค่ะ</div>';
+      container.appendChild(div);
+    });
+
+    // Photo section สำหรับ topic 3
+    if (flow.hasPhoto) {
+      document.getElementById("photoSection").style.display = "block";
+      renderPhotoGrid();
+    }
+  }
+
+  function onCompanyChange() {
+    const flow = FLOWS[TOPIC];
+    const companyIdx = flow.fields.findIndex(function(f) { return f.type === "company"; });
+    const branchIdx  = flow.fields.findIndex(function(f) { return f.type === "branch"; });
+    if (companyIdx < 0 || branchIdx < 0) return;
+
+    const companyEl = document.getElementById("f_" + companyIdx);
+    const branchEl  = document.getElementById("f_" + branchIdx);
+    const company   = companyEl ? companyEl.value : "";
+    const branches  = COMPANY_BRANCH[company] || [];
+
+    if (branchEl) {
+      if (branches.length === 0) {
+        branchEl.innerHTML = '<option value="ไม่มีสาขา">ไม่มีสาขา</option>';
+        branchEl.disabled = true;
+      } else {
+        branchEl.disabled = false;
+        branchEl.innerHTML = '<option value="">— กรุณาเลือกสาขา —</option>'
+          + branches.map(function(b) { return '<option value="' + b + '">' + b + '</option>'; }).join("");
+      }
+    }
+  }
+
+  function renderPhotoGrid() {
+    const grid = document.getElementById("photoGrid");
+    grid.innerHTML = "";
+    for (let i = 0; i < 4; i++) {
+      const slot = document.createElement("div");
+      slot.className = "photo-slot";
+      slot.id = "slot_" + i;
+      slot.innerHTML = '<span class="placeholder">📷</span>'
+        + '<input type="file" accept="image/*" onchange="onPhotoSelect(event,' + i + ')">'
+        + '<button class="remove-btn" onclick="removePhoto(' + i + ')">✕</button>';
+      grid.appendChild(slot);
+    }
+  }
+
+  function onPhotoSelect(event, idx) {
+    const file = event.target.files[0];
+    if (!file) return;
+    photoFiles[idx] = file;
+    const slot = document.getElementById("slot_" + idx);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      slot.innerHTML = '<img src="' + e.target.result + '">'
+        + '<button class="remove-btn" onclick="removePhoto(' + idx + ')">✕</button>';
+      slot.classList.add("has-image");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removePhoto(idx) {
+    photoFiles[idx] = null;
+    const slot = document.getElementById("slot_" + idx);
+    slot.className = "photo-slot";
+    slot.innerHTML = '<span class="placeholder">📷</span>'
+      + '<input type="file" accept="image/*" onchange="onPhotoSelect(event,' + idx + ')">'
+      + '<button class="remove-btn" onclick="removePhoto(' + idx + ')">✕</button>';
+  }
+
+  async function toBase64(file) {
+    return new Promise(function(resolve, reject) {
+      const reader = new FileReader();
+      reader.onload  = function() { resolve(reader.result.split(",")[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function submitForm() {
+    if (!liffReady) { alert("กรุณารอสักครู่ค่ะ"); return; }
+
+    const flow = FLOWS[TOPIC];
+    const answers = {};
+    let valid = true;
+
+    flow.fields.forEach(function(field, i) {
+      const el  = document.getElementById("f_" + i);
+      const val = el ? el.value.trim() : "";
+      const div = document.getElementById("field_" + i);
+      const isBranch = field.type === "branch";
+
+      if (!val && !isBranch) {
+        div.classList.add("error"); valid = false;
+      } else {
+        div.classList.remove("error");
+        answers[field.key] = val;
+      }
+    });
+
+    if (!valid) { window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+
+    document.getElementById("formSection").style.display   = "none";
+    document.getElementById("loadingSection").style.display = "block";
+
+    // อัปโหลดรูป (topic 3)
+    let photoLinks = [];
+    if (flow.hasPhoto) {
+      const photos = photoFiles.filter(function(f) { return f !== null; });
+      for (let i = 0; i < photos.length; i++) {
+        document.getElementById("loadingText").textContent = "กำลังอัปโหลดรูป " + (i+1) + "/" + photos.length + "...";
+        try {
+          const b64  = await toBase64(photos[i]);
+          const res  = await fetch(GAS_URL + "?action=upload", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: photos[i].name, mimeType: photos[i].type, data: b64 }),
+          });
+          const data = await res.json();
+          if (data.link) photoLinks.push(data.link);
+        } catch(err) {
+          console.warn("upload failed:", err);
+        }
+      }
+      answers["ลิงก์รูปภาพ"] = photoLinks.join("\n");
+    }
+
+    document.getElementById("loadingText").textContent = "กำลังส่งข้อมูล กรุณารอสักครู่...";
+
+    try {
+      const params = new URLSearchParams({
+        action:  "submit",
+        topic:   TOPIC,
+        userId:  userId,
+        idToken: idToken,
+        answers: JSON.stringify(answers),
+      });
+      const res  = await fetch(GAS_URL + "?" + params.toString());
+      const data = await res.json();
+
+      document.getElementById("loadingSection").style.display = "none";
+      if (data.status === "ok") {
+        document.getElementById("successMsg").textContent = flow.ack.replace(/\n/g, " ");
+        document.getElementById("refBadge").textContent   = "เลขที่: " + (data.refNo || "-");
+        document.getElementById("successSection").style.display = "block";
+      } else {
+        throw new Error("Server error");
+      }
+    } catch(err) {
+      document.getElementById("loadingSection").style.display = "none";
+      document.getElementById("formSection").style.display    = "block";
+      alert("เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้งค่ะ");
+    }
+  }
+
+  // ดึง UserProfile จาก GAS หลัง LIFF login เสร็จ
+  async function fetchAndAutoFill(uid) {
+    if (!uid) return;
+    try {
+      const url  = GAS_URL + "?action=profile&userId=" + encodeURIComponent(uid);
+      console.log("fetchAndAutoFill URL:", url);
+      const res  = await fetch(url);
+      const text = await res.text();
+      console.log("fetchAndAutoFill response:", text);
+      const data = JSON.parse(text);
+      if (data.status === "ok" && data.profile) {
+        console.log("profile:", JSON.stringify(data.profile));
+        autoFillFromProfile(data.profile);
+      }
+    } catch(e) {
+      console.warn("fetchAndAutoFill error:", e);
+    }
+  }
+
+  // Auto-fill ฟอร์มจาก UserProfile
+  function autoFillFromProfile(profile) {
+    if (!profile || Object.keys(profile).length === 0) return;
+    const flow = FLOWS[TOPIC];
+    if (!flow) return;
+    console.log("autoFill profile:", JSON.stringify(profile));
+
+    flow.fields.forEach(function(field, i) {
+      const el = document.getElementById("f_" + i);
+      if (!el) return;
+
+      if (field.type === "company") {
+        const val = profile["บริษัท"] || "";
+        if (val) {
+          el.value = val;
+          onCompanyChange();
+          // รอ branch render แล้ว set สาขา
+          setTimeout(function() {
+            const branchIdx = flow.fields.findIndex(function(f) { return f.type === "branch"; });
+            if (branchIdx >= 0) {
+              const branchEl = document.getElementById("f_" + branchIdx);
+              if (branchEl && profile["สาขา"]) branchEl.value = profile["สาขา"];
+            }
+          }, 200);
+        }
+      } else if (field.type === "branch") {
+        // จัดการผ่าน company timeout ด้านบน
+      } else {
+        const val = profile[field.key] || "";
+        if (val) el.value = val;
+      }
+    });
+  }
+
+  function closeLiff() {
+    if (liff.isInClient()) { liff.closeWindow(); }
+    else { window.close(); }
+  }
+
+  // โหลด FLOWS และ COMPANY_BRANCH จาก GAS ก่อน init
+  async function loadConfig() {
+    try {
+      const res  = await fetch(GAS_URL + "?action=config");
+      const data = await res.json();
+      if (data.flows)         FLOWS          = data.flows;
+      if (data.companyBranch) COMPANY_BRANCH = data.companyBranch;
+    } catch(e) {
+      console.error("loadConfig error:", e);
+    }
+  }
+
+  async function start() {
+    await loadConfig();
+    await init();
+  }
+
+  window.addEventListener("load", start);
+</script>
+</body>
+</html>
