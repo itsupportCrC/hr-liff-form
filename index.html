@@ -100,10 +100,120 @@
 
 <script>
   const LIFF_ID   = "2010288695-pPKXCZPa";
-  let FLOWS = null;
-  let COMPANY_BRANCH = null;
+
+  // ===== FLOWS =====
+  const FLOWS = {
+    "1": {
+      sheetName: "เงินเดือน-เอกสาร", title: "เงินเดือน & เอกสาร", icon: "💰",
+      fields: [
+        { key: "บริษัท", label: "บริษัท", type: "company" },
+        { key: "สาขา", label: "สาขา", type: "branch" },
+        { key: "รหัสพนักงาน", label: "รหัสพนักงาน", type: "text", placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล" },
+        { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
+        { key: "ประเภทเอกสาร", label: "ประเภทเอกสาร", type: "select", opts: ["หนังสือรับรองเงินเดือน","หนังสือรับรองการทำงาน","หนังสือรับรองความประพฤติ (เงินยิ้มได้)","หนังสือรับรองการผ่านงาน (กรณีลาออก)"] },
+        { key: "จำนวนชุด", label: "จำนวนชุด", type: "number", placeholder: "ระบุจำนวน" },
+        { key: "วัตถุประสงค์", label: "วัตถุประสงค์", type: "text", placeholder: "เช่น ยื่นกู้ธนาคาร" },
+        { key: "วันที่ต้องการรับ", label: "วันที่ต้องการรับ", type: "date" },
+        { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel", placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ ฝ่ายบุคคลได้รับคำร้องเรียบร้อยแล้วค่ะ 📩\nจะดำเนินการและติดต่อกลับภายใน 1–3 วันทำการค่ะ\nขอบคุณค่ะ 🌷",
+    },
+    "2": {
+      sheetName: "สวัสดิการ-กองทุน", title: "สวัสดิการ & กองทุน", icon: "🏥",
+      fields: [
+        { key: "บริษัท", label: "บริษัท", type: "company" },
+        { key: "สาขา", label: "สาขา", type: "branch" },
+        { key: "รหัสพนักงาน", label: "รหัสพนักงาน", type: "text", placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล" },
+        { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
+        { key: "ประเภท", label: "ประเภท", type: "select", opts: ["เบิกของสวัสดิการ","เบิกสวัสดิการตามสิทธิ","สมัครกองทุนสำรองเลี้ยงชีพ"] },
+        { key: "รายละเอียด", label: "รายละเอียด", type: "textarea", placeholder: "อธิบายรายละเอียด" },
+        { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel", placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nจะดำเนินการและติดต่อกลับภายใน 1–3 วันทำการค่ะ\nขอบคุณค่ะ 🌷",
+    },
+    "3": {
+      sheetName: "แจ้งอุบัติเหตุ", title: "แจ้งอุบัติเหตุ", icon: "🚨", hasPhoto: true,
+      fields: [
+        { key: "บริษัท", label: "บริษัท", type: "company" },
+        { key: "สาขา", label: "สาขา", type: "branch" },
+        { key: "รหัสพนักงาน", label: "รหัสพนักงาน", type: "text", placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล" },
+        { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
+        { key: "วัน/เดือน/ปี ที่เกิดเหตุ", label: "วันที่เกิดเหตุ", type: "date" },
+        { key: "เวลาที่เกิดเหตุ", label: "เวลาที่เกิดเหตุ", type: "time" },
+        { key: "สถานที่เกิดเหตุ", label: "สถานที่เกิดเหตุ", type: "text", placeholder: "ระบุสถานที่" },
+        { key: "หน้าที่ขณะเกิดอุบัติเหตุ", label: "หน้าที่ขณะเกิดเหตุ", type: "text", placeholder: "ระบุหน้าที่" },
+        { key: "อวัยวะที่ได้รับบาดเจ็บ", label: "อวัยวะที่บาดเจ็บ", type: "text", placeholder: "ระบุอวัยวะ" },
+        { key: "อาการเบื้องต้น", label: "อาการเบื้องต้น", type: "textarea", placeholder: "อธิบายอาการ" },
+        { key: "รายละเอียดเหตุการณ์", label: "รายละเอียดเหตุการณ์", type: "textarea", placeholder: "เล่าเหตุการณ์" },
+        { key: "ผู้เห็นเหตุการณ์/พยาน", label: "พยาน/ผู้เห็นเหตุการณ์", type: "text", placeholder: "ชื่อพยาน (ถ้ามี)" },
+        { key: "เบอร์โทรติดต่อหน้างาน", label: "เบอร์โทรติดต่อ", type: "tel", placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ รับแจ้งอุบัติเหตุเรียบร้อยแล้วค่ะ 📩\nฝ่ายบุคคลจะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
+    },
+    "4": {
+      sheetName: "ฝึกอบรม-ดูงาน", title: "ฝึกอบรม & ดูงาน", icon: "📚",
+      fields: [
+        { key: "บริษัท", label: "บริษัท", type: "company" },
+        { key: "สาขา", label: "สาขา", type: "branch" },
+        { key: "รหัสพนักงาน", label: "รหัสพนักงาน", type: "text", placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล" },
+        { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
+        { key: "แผนก", label: "แผนก", type: "text", placeholder: "ชื่อแผนก" },
+        { key: "วันที่อบรม", label: "วันที่อบรม/ดูงาน", type: "date" },
+        { key: "วันที่เดินทางไป", label: "วันที่เดินทางไป", type: "date" },
+        { key: "วันที่เดินทางกลับ", label: "วันที่เดินทางกลับ", type: "date" },
+        { key: "สถานที่ฝึกอบรม", label: "สถานที่ฝึกอบรม", type: "text", placeholder: "ระบุสถานที่" },
+        { key: "จังหวัด", label: "จังหวัด", type: "text", placeholder: "ระบุจังหวัด" },
+        { key: "รายละเอียดเกี่ยวกับการอบรม", label: "รายละเอียดการอบรม", type: "textarea", placeholder: "อธิบายรายละเอียด" },
+        { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel", placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nจะดำเนินการและติดต่อกลับภายใน 1–3 วันทำการค่ะ\nขอบคุณค่ะ 🌷",
+    },
+    "5": {
+      sheetName: "ข้อร้องเรียน-เสนอแนะ", title: "ข้อร้องเรียน & เสนอแนะ", icon: "📣",
+      fields: [
+        { key: "บริษัท", label: "บริษัท", type: "company" },
+        { key: "สาขา", label: "สาขา", type: "branch" },
+        { key: "รหัสพนักงาน", label: "รหัสพนักงาน", type: "text", placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล (หรือ - ถ้าไม่ระบุ)" },
+        { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
+        { key: "แผนก", label: "แผนก", type: "text", placeholder: "ชื่อแผนก" },
+        { key: "หัวข้อ", label: "หัวข้อ", type: "select", opts: ["ข้อร้องเรียน","ข้อเสนอแนะ"] },
+        { key: "รายละเอียด", label: "รายละเอียด", type: "textarea", placeholder: "อธิบายรายละเอียด" },
+        { key: "ระดับความเร่งด่วน", label: "ระดับความเร่งด่วน", type: "select", opts: ["ปกติ","ปานกลาง","ด่วนที่สุด!"] },
+        { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel", placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ ขอบคุณที่ไว้วางใจฝ่ายบุคคลค่ะ 🔒\nข้อมูลของท่านจะถูกเก็บเป็นความลับ\nจะดำเนินการและติดต่อกลับภายใน 3–5 วันทำการค่ะ\nขอบคุณค่ะ 🌷",
+    },
+    "6": {
+      sheetName: "ติดต่อ-HR", title: "ติดต่อ HR", icon: "📞",
+      fields: [
+        { key: "บริษัท", label: "บริษัท", type: "company" },
+        { key: "สาขา", label: "สาขา", type: "branch" },
+        { key: "รหัสพนักงาน", label: "รหัสพนักงาน", type: "text", placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล" },
+        { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
+        { key: "เลือกผู้ที่ต้องการติดต่อ", label: "ผู้ที่ต้องการติดต่อ", type: "select", opts: ["คุณสุจิตรา — ผู้จัดการฝ่ายบุคคล (081-2348457)","คุณวรัทยา — ผู้ช่วยผู้จัดการฝ่ายบุคคล (063-4940807)","คุณสุรินันท์ — เงินเดือน คลังเหล็ก (081-7131927)","คุณวรัทยา — เงินเดือน เครือ PTT (063-4940807)","คุณจิราวรรณ — เงินเดือน 7-11 (081-7131927)","คุณจิราวรรณ — สวัสดิการ (081-7131927)","คุณปัทมาวรรณ — สรรหา (064-5586860)","คุณสุรินันท์ — อบรม (081-7131927)"] },
+        { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel", placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
+    },
+  };
   const GAS_URL = "https://script.google.com/macros/s/AKfycbxb5seM30crVCQBcAFYf9TAFa_h5JefMJ4DvX5sD2eOVNU5Tc118u6zzAFT927YQ0inAg/exec";
   let userProfile = {};
+
+  // ===== COMPANY_BRANCH =====
+  const COMPANY_BRANCH = {
+    "เจริญไชยสุรินทร์คลังเหล็ก": ["สำนักงานใหญ่","สาขานางรอง","สาขาเดชอุดม"],
+    "บริษัทเจริญไชยสุรินทร์ปิโตรเลียม จำกัด": ["ปั๊มคอโค","ปั๊มธนสาร"],
+    "ห้างหุ้นส่วนจำกัด เจริญไชยบริการ": ["ปั๊มบึ๊กซี","ปั๊มเขวาสินรินทร์"],
+    "บริษัทเจริญไชยสุรินทร์บริการ": ["ปั๊มติดศูนย์โดโยต้า"],
+    "ห้างหุ้นส่วนจำกัด เจริญไชยดอฟฟีช็อป": [],
+    "ห้างหุ้นส่วนจำกัด ทวิหิรัญโรจน์คอฟฟีช็อป": [],
+  };
   const GAS_TOPIC = "";
 
   let userId    = "";
@@ -458,24 +568,7 @@
     else { window.close(); }
   }
 
-  // โหลด FLOWS และ COMPANY_BRANCH จาก GAS ก่อน init
-  async function loadConfig() {
-    try {
-      const res  = await fetch(GAS_URL + "?action=config");
-      const data = await res.json();
-      if (data.flows)         FLOWS          = data.flows;
-      if (data.companyBranch) COMPANY_BRANCH = data.companyBranch;
-    } catch(e) {
-      console.error("loadConfig error:", e);
-    }
-  }
-
-  async function start() {
-    await loadConfig();
-    await init();
-  }
-
-  window.addEventListener("load", start);
+  window.addEventListener("load", init);
 </script>
 </body>
 </html>
