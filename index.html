@@ -492,17 +492,14 @@
         idToken: idToken,
         answers: JSON.stringify(answers),
       });
-      const res  = await fetch(GAS_URL + "?" + params.toString());
-      const data = await res.json();
+      // GAS ไม่รองรับ CORS header → ใช้ no-cors แล้วแสดง success เลย
+      // (GAS จะรับข้อมูลและบันทึก Sheet แม้จะ no-cors)
+      await fetch(GAS_URL + "?" + params.toString(), { mode: "no-cors" });
 
       document.getElementById("loadingSection").style.display = "none";
-      if (data.status === "ok") {
-        document.getElementById("successMsg").textContent = flow.ack.replace(/\n/g, " ");
-        document.getElementById("refBadge").textContent   = "เลขที่: " + (data.refNo || "-");
-        document.getElementById("successSection").style.display = "block";
-      } else {
-        throw new Error("Server error");
-      }
+      document.getElementById("successMsg").textContent = flow.ack.replace(/\n/g, " ");
+      document.getElementById("refBadge").textContent   = "กำลังดำเนินการค่ะ";
+      document.getElementById("successSection").style.display = "block";
     } catch(err) {
       document.getElementById("loadingSection").style.display = "none";
       document.getElementById("formSection").style.display    = "block";
@@ -511,22 +508,20 @@
   }
 
   // ดึง UserProfile จาก GAS หลัง LIFF login เสร็จ
-  async function fetchAndAutoFill(uid) {
+  // ใช้ JSONP แทน fetch เพื่อเลี่ยง CORS
+  function fetchAndAutoFill(uid) {
     if (!uid) return;
-    try {
-      const url  = GAS_URL + "?action=profile&userId=" + encodeURIComponent(uid);
-      console.log("fetchAndAutoFill URL:", url);
-      const res  = await fetch(url);
-      const text = await res.text();
-      console.log("fetchAndAutoFill response:", text);
-      const data = JSON.parse(text);
-      if (data.status === "ok" && data.profile) {
-        console.log("profile:", JSON.stringify(data.profile));
-        autoFillFromProfile(data.profile);
-      }
-    } catch(e) {
-      console.warn("fetchAndAutoFill error:", e);
-    }
+    const callbackName = "gasCallback_" + Date.now();
+    window[callbackName] = function(data) {
+      if (data && data.profile) autoFillFromProfile(data.profile);
+      delete window[callbackName];
+      const s = document.getElementById("gasScript");
+      if (s) s.remove();
+    };
+    const script = document.createElement("script");
+    script.id  = "gasScript";
+    script.src = GAS_URL + "?action=profile&userId=" + encodeURIComponent(uid) + "&callback=" + callbackName;
+    document.head.appendChild(script);
   }
 
   // Auto-fill ฟอร์มจาก UserProfile
