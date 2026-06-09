@@ -596,64 +596,28 @@
   }
 
   // ดึง UserProfile จาก GAS หลัง LIFF login เสร็จ
-  // Upload รูปผ่าน iframe form POST (ไม่ติด CORS)
-  function uploadViaJSONP(fileData) {
-    return new Promise(function(resolve, reject) {
-      const cbName  = "gasUpload_" + Date.now();
-      const frameId = "uploadFrame_" + Date.now();
-      const formId  = "uploadForm_" + Date.now();
+  // Upload รูปผ่าน Cloudinary (ไม่ติด CORS)
+  const CLOUDINARY_CLOUD  = "dmniqiet7";
+  const CLOUDINARY_PRESET = "np9mbto9";
 
-      const timeout = setTimeout(function() {
-        cleanup();
-        reject(new Error("upload timeout"));
-      }, 30000);
+  async function uploadViaJSONP(fileData) {
+    const url  = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD + "/image/upload";
+    const body = new FormData();
+    body.append("upload_preset", CLOUDINARY_PRESET);
+    body.append("folder", "hr-accident");
+    // แปลง base64 กลับเป็น blob
+    const byteStr = atob(fileData.data);
+    const arr = new Uint8Array(byteStr.length);
+    for (let i = 0; i < byteStr.length; i++) arr[i] = byteStr.charCodeAt(i);
+    const blob = new Blob([arr], { type: fileData.mimeType || "image/jpeg" });
+    body.append("file", blob, fileData.name || "photo.jpg");
 
-      function cleanup() {
-        delete window[cbName];
-        const fr = document.getElementById(frameId);
-        const fm = document.getElementById(formId);
-        if (fr) fr.remove();
-        if (fm) fm.remove();
-      }
-
-      window[cbName] = function(data) {
-        clearTimeout(timeout);
-        cleanup();
-        resolve(data);
-      };
-
-      // สร้าง hidden iframe
-      const iframe = document.createElement("iframe");
-      iframe.id   = frameId;
-      iframe.name = frameId;
-      iframe.style.display = "none";
-      document.body.appendChild(iframe);
-
-      // สร้าง form POST
-      const form = document.createElement("form");
-      form.id     = formId;
-      form.method = "POST";
-      form.action = GAS_URL;
-      form.target = frameId;
-      form.style.display = "none";
-
-      function addField(name, value) {
-        const input = document.createElement("input");
-        input.type  = "hidden";
-        input.name  = name;
-        input.value = value;
-        form.appendChild(input);
-      }
-
-      addField("action",   "upload");
-      addField("name",     fileData.name || "photo.jpg");
-      addField("mimeType", fileData.mimeType || "image/jpeg");
-      addField("data",     fileData.data);
-      addField("callback", cbName);
-
-      document.body.appendChild(form);
-      form.submit();
-    });
+    const res  = await fetch(url, { method: "POST", body: body });
+    const data = await res.json();
+    if (data.secure_url) {
+      return { link: data.secure_url };
+    }
+    throw new Error("Cloudinary error: " + JSON.stringify(data));
   }
 
   // JSONP submit
