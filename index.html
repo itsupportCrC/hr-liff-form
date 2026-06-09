@@ -209,7 +209,7 @@
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyfuFIOD8Otd3Szs3vj9_E-icG1jjucv24jyeRnshlJEs38TrduQErgHv8ZgCltA3UtmQ/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxb5seM30crVCQBcAFYf9TAFa_h5JefMJ4DvX5sD2eOVNU5Tc118u6zzAFT927YQ0inAg/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -522,7 +522,7 @@
     document.getElementById("formSection").style.display   = "none";
     document.getElementById("loadingSection").style.display = "block";
 
-    // อัปโหลดรูป (topic 3)
+    // อัปโหลดรูป (topic 3) — ใช้ JSONP เพื่อเลี่ยง CORS
     let photoLinks = [];
     if (flow.hasPhoto) {
       const photos = photoFiles.filter(function(f) { return f !== null; });
@@ -530,13 +530,13 @@
         document.getElementById("loadingText").textContent = "กำลังอัปโหลดรูป " + (i+1) + "/" + photos.length + "...";
         try {
           const b64  = await toBase64(photos[i]);
-          const res  = await fetch(GAS_URL + "?action=upload", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: photos[i].name, mimeType: photos[i].type, data: b64 }),
+          // ส่ง base64 ผ่าน JSONP GET (แบ่งเป็น chunks ถ้าใหญ่เกิน)
+          const result = await uploadViaJSONP({
+            name:     photos[i].name,
+            mimeType: photos[i].type,
+            data:     b64,
           });
-          const data = await res.json();
-          if (data.link) photoLinks.push(data.link);
+          if (result && result.link) photoLinks.push(result.link);
         } catch(err) {
           console.warn("upload failed:", err);
         }
@@ -573,6 +573,43 @@
   }
 
   // ดึง UserProfile จาก GAS หลัง LIFF login เสร็จ
+  // JSONP upload รูป
+  function uploadViaJSONP(fileData) {
+    return new Promise(function(resolve, reject) {
+      const cbName  = "gasUpload_" + Date.now();
+      const timeout = setTimeout(function() {
+        delete window[cbName];
+        reject(new Error("upload timeout"));
+      }, 30000);
+
+      window[cbName] = function(data) {
+        clearTimeout(timeout);
+        delete window[cbName];
+        const s = document.getElementById("uploadScript");
+        if (s) s.remove();
+        resolve(data);
+      };
+
+      const params = new URLSearchParams({
+        action:   "upload",
+        name:     fileData.name,
+        mimeType: fileData.mimeType,
+        data:     fileData.data,
+        callback: cbName,
+      });
+
+      const script = document.createElement("script");
+      script.id    = "uploadScript";
+      script.src   = GAS_URL + "?" + params.toString();
+      script.onerror = function() {
+        clearTimeout(timeout);
+        delete window[cbName];
+        reject(new Error("upload script error"));
+      };
+      document.head.appendChild(script);
+    });
+  }
+
   // JSONP submit
   function submitViaJSONP(url) {
     return new Promise(function(resolve, reject) {
