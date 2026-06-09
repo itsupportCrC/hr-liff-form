@@ -202,7 +202,7 @@
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbyNWD7i4CcxCWShuDCjmfQqQWxMXFiAOGiwBZesDim_d50svnsmsD4zShr8PPAUC7900A/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwjqSs2nfgG0PYJoJxQSVYsZy-g33NfrAZyDVy-hjOldqtjPhZxhDcht-1C_p6YP2h-Hw/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -335,14 +335,15 @@
           + '<option value="">— กรุณาเลือกบริษัท —</option>' + opts + '</select>';
 
       } else if (field.type === "branch") {
-        input = '<select id="f_' + i + '" id="branchSelect">'
+        input = '<select id="f_' + i + '">'
           + '<option value="">— เลือกบริษัทก่อน —</option></select>';
 
       } else if (field.type === "select") {
         const opts = field.opts.map(function(o) {
           return '<option value="' + o + '">' + o + '</option>';
         }).join("");
-        input = '<select id="f_' + i + '"><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
+        const onchange = field.conditional ? ' onchange="onConditionalChange(' + i + ')"' : '';
+        input = '<select id="f_' + i + '"' + onchange + '><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
 
       } else if (field.type === "textarea") {
         input = '<textarea id="f_' + i + '" placeholder="' + (field.placeholder || "") + '"></textarea>';
@@ -362,6 +363,50 @@
     if (flow.hasPhoto) {
       document.getElementById("photoSection").style.display = "block";
       renderPhotoGrid();
+    }
+  }
+
+  // Conditional Field — แสดง/ซ่อน field ตามค่าที่เลือก
+  function onConditionalChange(fieldIdx) {
+    const flow  = FLOWS[TOPIC];
+    const field = flow.fields[fieldIdx];
+    if (!field || !field.conditional) return;
+
+    const el  = document.getElementById("f_" + fieldIdx);
+    const val = el ? el.value : "";
+
+    // ลบ conditional field เดิมออก
+    const existing = document.getElementById("conditional_" + fieldIdx);
+    if (existing) existing.remove();
+
+    // ถ้าเลือกค่าที่มี conditional
+    const condField = field.conditional[val];
+    if (!condField) return;
+
+    // สร้าง field ใหม่
+    const div = document.createElement("div");
+    div.className = "field";
+    div.id = "conditional_" + fieldIdx;
+
+    let input = "";
+    if (condField.type === "select") {
+      const opts = condField.opts.map(function(o) {
+        return '<option value="' + o + '">' + o + '</option>';
+      }).join("");
+      input = '<select id="fc_' + fieldIdx + '"><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
+    } else {
+      input = '<input type="text" id="fc_' + fieldIdx + '" placeholder="' + (condField.placeholder || "") + '">';
+    }
+
+    div.innerHTML = '<label>' + condField.label + ' <span class="required">*</span></label>'
+      + input + '<div class="error-msg">กรุณากรอกข้อมูลนี้ค่ะ</div>';
+
+    // แทรกหลัง field ปัจจุบัน
+    const parentField = document.getElementById("field_" + fieldIdx);
+    if (parentField && parentField.nextSibling) {
+      parentField.parentNode.insertBefore(div, parentField.nextSibling);
+    } else if (parentField) {
+      parentField.parentNode.appendChild(div);
     }
   }
 
@@ -445,13 +490,23 @@
       const el  = document.getElementById("f_" + i);
       const val = el ? el.value.trim() : "";
       const div = document.getElementById("field_" + i);
-      const isBranch = field.type === "branch";
+      const isBranch   = field.type === "branch";
+      const isOptional = field.required === false;
 
-      if (!val && !isBranch) {
+      if (!val && !isBranch && !isOptional) {
         div.classList.add("error"); valid = false;
       } else {
         div.classList.remove("error");
         answers[field.key] = val;
+      }
+
+      // เก็บค่า conditional field ถ้ามี
+      if (field.conditional) {
+        const condEl = document.getElementById("fc_" + i);
+        if (condEl && condEl.value.trim()) {
+          const condField = field.conditional[val];
+          if (condField) answers[condField.key] = condEl.value.trim();
+        }
       }
     });
 
