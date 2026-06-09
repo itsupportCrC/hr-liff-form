@@ -37,6 +37,14 @@
     .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
     .photo-slot .placeholder { font-size: 1.8rem; color: #ccc; }
     .photo-slot .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: none; }
+    /* File upload section */
+    .file-section { margin: 0 16px 16px; }
+    .file-section h3 { font-size: 0.9rem; font-weight: 600; color: #333; margin-bottom: 10px; }
+    .file-item { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; background: #fafafa; border: 1.5px solid #ddd; border-radius: 10px; padding: 10px 12px; position: relative; }
+    .file-item input[type=file] { flex: 1; font-size: 0.85rem; font-family: inherit; border: none; background: transparent; }
+    .file-item .file-name { flex: 1; font-size: 0.85rem; color: #333; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .file-item .remove-file { background: none; border: none; color: #e53e3e; font-size: 1.1rem; cursor: pointer; padding: 0 4px; flex-shrink: 0; }
+    .btn-add-file { display: flex; align-items: center; gap: 6px; background: none; border: 1.5px dashed #1A6B1A; border-radius: 10px; color: #1A6B1A; font-size: 0.85rem; font-family: inherit; padding: 8px 14px; cursor: pointer; width: 100%; justify-content: center; }
     .photo-slot.has-image .remove-btn { display: flex; align-items: center; justify-content: center; }
     .btn-submit { display: block; width: calc(100% - 32px); margin: 0 16px 16px; padding: 15px; background: #1A6B1A; color: white; border: none; border-radius: 12px; font-size: 1rem; font-weight: 700; font-family: inherit; cursor: pointer; }
     .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -71,6 +79,11 @@
   <div id="photoSection" class="photo-section" style="display:none;">
     <h3>📷 แนบรูปอุบัติเหตุ (สูงสุด 4 รูป)</h3>
     <div class="photo-grid" id="photoGrid"></div>
+  </div>
+  <div id="fileSection" class="file-section" style="display:none;">
+    <h3>📎 แนบไฟล์เอกสาร</h3>
+    <div id="fileList"></div>
+    <button class="btn-add-file" id="btnAddFile" onclick="addFileSlot()">+ เพิ่มไฟล์</button>
   </div>
   <button class="btn-submit" onclick="submitForm()">✅ ยืนยันการส่ง</button>
 </div>
@@ -160,7 +173,7 @@
       ack: "✅ รับแจ้งอุบัติเหตุเรียบร้อยแล้วค่ะ 📩\nฝ่ายบุคคลจะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
     "4": {
-      sheetName: "ฝึกอบรม-ดูงาน", title: "ฝึกอบรม & ดูงาน", icon: "📚",
+      sheetName: "ฝึกอบรม-ดูงาน", title: "ฝึกอบรม & ดูงาน", icon: "📚", hasFile: true,
       fields: [
         { key: "บริษัท", label: "บริษัท", type: "company" },
         { key: "สาขา", label: "สาขา", type: "branch" },
@@ -208,7 +221,7 @@
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbwhs93wAEpCUFHpgtZpoQBOPnvwleQTLaELOjEii29ZqdG6hOvROux_hGQSjCHIohODew/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbw3g7LFTlQMoQSXrDZ6AolFxVJ9GOy6cKB0R37U4Q2cwRqmRTl7dx8oFiHbqfGO4xo/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -308,8 +321,7 @@
     }
     document.getElementById("formSection").style.display = "block";
     renderForm();
-
-    // Auto-fill: ดึง UserProfile จาก GAS ด้วย userId ที่ได้จาก LIFF
+    renderFileSectionIfNeeded();
     if (userId) {
       fetchAndAutoFill(userId);
     } else if (userProfile && userProfile["รหัสพนักงาน"]) {
@@ -566,6 +578,12 @@
       answers["ลิงก์รูปภาพ"] = photoLinks.join("\n");
     }
 
+    // อัปโหลดไฟล์แนบ (topic 4)
+    if (flow.hasFile) {
+      const fileLinks = await uploadFilesToCloudinary();
+      if (fileLinks.length > 0) answers["ลิงก์เอกสารแนบ"] = fileLinks.join("\n");
+    }
+
     document.getElementById("loadingText").textContent = "กำลังส่งข้อมูล กรุณารอสักครู่...";
 
     try {
@@ -696,6 +714,99 @@
         if (val) el.value = val;
       }
     });
+  }
+
+  // ===== File Upload (topic 4) =====
+  const fileItems = []; // { file, slot }
+  const MAX_FILES = 4;
+
+  function renderFileSectionIfNeeded() {
+    const flow = FLOWS[TOPIC];
+    if (flow && flow.hasFile) {
+      document.getElementById("fileSection").style.display = "block";
+      // เพิ่ม slot แรกอัตโนมัติ
+      if (fileItems.length === 0) addFileSlot();
+    }
+  }
+
+  function addFileSlot() {
+    if (fileItems.length >= MAX_FILES) return;
+    const idx  = fileItems.length;
+    const item = { file: null };
+    fileItems.push(item);
+
+    const div = document.createElement("div");
+    div.className = "file-item";
+    div.id = "fileItem_" + idx;
+    div.innerHTML = '<input type="file" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" onchange="onFileSelect(event,' + idx + ')" />'
+      + '<button class="remove-file" onclick="removeFileSlot(' + idx + ')">✕</button>';
+    document.getElementById("fileList").appendChild(div);
+
+    // ซ่อนปุ่มเพิ่มถ้าครบ 4
+    if (fileItems.length >= MAX_FILES) {
+      document.getElementById("btnAddFile").style.display = "none";
+    }
+  }
+
+  function onFileSelect(event, idx) {
+    const file = event.target.files[0];
+    if (!file) return;
+    fileItems[idx].file = file;
+    const div = document.getElementById("fileItem_" + idx);
+    div.innerHTML = '<span class="file-name">📎 ' + file.name + '</span>'
+      + '<button class="remove-file" onclick="removeFileSlot(' + idx + ')">✕</button>';
+  }
+
+  function removeFileSlot(idx) {
+    fileItems.splice(idx, 1);
+    // re-render ทั้งหมด
+    const list = document.getElementById("fileList");
+    list.innerHTML = "";
+    const backup = [...fileItems];
+    fileItems.length = 0;
+    backup.forEach(function(item) {
+      addFileSlot();
+      if (item.file) fileItems[fileItems.length - 1].file = item.file;
+    });
+    document.getElementById("btnAddFile").style.display = "flex";
+  }
+
+  async function toBase64File(file) {
+    return new Promise(function(resolve, reject) {
+      const reader = new FileReader();
+      reader.onload  = function() { resolve(reader.result.split(",")[1]); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function uploadFilesToCloudinary() {
+    const links = [];
+    const files = fileItems.filter(function(i) { return i.file; });
+    for (let i = 0; i < files.length; i++) {
+      document.getElementById("loadingText").textContent = "กำลังอัปโหลดไฟล์ " + (i+1) + "/" + files.length + "...";
+      try {
+        const file = files[i].file;
+        const isImage = file.type.startsWith("image/");
+        const b64  = isImage ? await toBase64(file) : await toBase64File(file);
+        const type = isImage ? "image" : "raw";
+        const url  = "https://api.cloudinary.com/v1_1/" + CLOUDINARY_CLOUD + "/" + type + "/upload";
+        const body = new FormData();
+        body.append("upload_preset", CLOUDINARY_PRESET);
+        body.append("folder", "hr-training");
+        const byteStr = atob(b64);
+        const arr = new Uint8Array(byteStr.length);
+        for (let j = 0; j < byteStr.length; j++) arr[j] = byteStr.charCodeAt(j);
+        const blob = new Blob([arr], { type: file.type });
+        body.append("file", blob, file.name);
+        const res  = await fetch(url, { method: "POST", body: body });
+        const data = await res.json();
+        if (data.secure_url) links.push(data.secure_url);
+      } catch(err) {
+        console.warn("upload file failed:", err);
+      }
+    }
+    return links;
   }
 
   function closeLiff() {
