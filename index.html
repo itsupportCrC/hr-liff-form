@@ -209,7 +209,7 @@
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbym5Q5eePwnPZhQ_J--2dzbCgFhUkzbuHQNKX5O70caGAUKFowHImdnI5pXEnGySQ6udw/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbwhs93wAEpCUFHpgtZpoQBOPnvwleQTLaELOjEii29ZqdG6hOvROux_hGQSjCHIohODew/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -596,40 +596,63 @@
   }
 
   // ดึง UserProfile จาก GAS หลัง LIFF login เสร็จ
-  // JSONP upload รูป
+  // Upload รูปผ่าน iframe form POST (ไม่ติด CORS)
   function uploadViaJSONP(fileData) {
     return new Promise(function(resolve, reject) {
       const cbName  = "gasUpload_" + Date.now();
+      const frameId = "uploadFrame_" + Date.now();
+      const formId  = "uploadForm_" + Date.now();
+
       const timeout = setTimeout(function() {
-        delete window[cbName];
+        cleanup();
         reject(new Error("upload timeout"));
       }, 30000);
 
+      function cleanup() {
+        delete window[cbName];
+        const fr = document.getElementById(frameId);
+        const fm = document.getElementById(formId);
+        if (fr) fr.remove();
+        if (fm) fm.remove();
+      }
+
       window[cbName] = function(data) {
         clearTimeout(timeout);
-        delete window[cbName];
-        const s = document.getElementById("uploadScript");
-        if (s) s.remove();
+        cleanup();
         resolve(data);
       };
 
-      const params = new URLSearchParams({
-        action:   "upload",
-        name:     fileData.name,
-        mimeType: fileData.mimeType,
-        data:     fileData.data,
-        callback: cbName,
-      });
+      // สร้าง hidden iframe
+      const iframe = document.createElement("iframe");
+      iframe.id   = frameId;
+      iframe.name = frameId;
+      iframe.style.display = "none";
+      document.body.appendChild(iframe);
 
-      const script = document.createElement("script");
-      script.id    = "uploadScript";
-      script.src   = GAS_URL + "?" + params.toString();
-      script.onerror = function() {
-        clearTimeout(timeout);
-        delete window[cbName];
-        reject(new Error("upload script error"));
-      };
-      document.head.appendChild(script);
+      // สร้าง form POST
+      const form = document.createElement("form");
+      form.id     = formId;
+      form.method = "POST";
+      form.action = GAS_URL;
+      form.target = frameId;
+      form.style.display = "none";
+
+      function addField(name, value) {
+        const input = document.createElement("input");
+        input.type  = "hidden";
+        input.name  = name;
+        input.value = value;
+        form.appendChild(input);
+      }
+
+      addField("action",   "upload");
+      addField("name",     fileData.name || "photo.jpg");
+      addField("mimeType", fileData.mimeType || "image/jpeg");
+      addField("data",     fileData.data);
+      addField("callback", cbName);
+
+      document.body.appendChild(form);
+      form.submit();
     });
   }
 
