@@ -925,12 +925,13 @@
     const toEl   = document.getElementById('t7_dateTo');
     if (!fromEl || !toEl || !fromEl.value || !toEl.value) return;
     const d = Math.max(0, (new Date(toEl.value) - new Date(fromEl.value)) / 86400000);
-    // หา input จากทุก input ที่ readonly และมี placeholder คำนวณอัตโนมัติ
-    document.querySelectorAll('#formFields input[readonly]').forEach(function(el) {
-      const lbl = el.closest('div')?.previousElementSibling?.textContent || 
-                  el.parentElement?.querySelector('label')?.textContent || '';
-      if (lbl.includes('จำนวนวัน'))  el.value = Math.round(d+1) + ' วัน';
-      if (lbl.includes('จำนวนคืน')) el.value = Math.round(d) + ' คืน';
+    const days   = Math.round(d + 1);
+    const nights = Math.round(d);
+    // หา input จำนวนวัน/คืน จาก field ที่อยู่ใน #formFields และมี placeholder คำนวณอัตโนมัติ
+    const inputs = document.querySelectorAll('#formFields input[placeholder="คำนวณอัตโนมัติ"]');
+    inputs.forEach(function(el, idx) {
+      if (idx === 0) el.value = days + ' วัน';
+      if (idx === 1) el.value = nights + ' คืน';
     });
   }
 
