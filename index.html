@@ -263,9 +263,8 @@
         { key: "เวลาออกเดินทาง",     label: "เวลาออกเดินทาง",    type: "timeTH" },
         { key: "เวลากลับถึง",        label: "เวลากลับถึง",        type: "timeTH" },
         { key: "ประเภทการเบิก",      label: "ประเภทการเบิก",      type: "expenseType" },
-        { key: "หน่วยงานที่จัดให้",  label: "หน่วยงานที่จัดให้",  type: "text",  placeholder: "ชื่อหน่วยงาน", required: false, hideDefault: true },
         { key: "รายการค่าเบี้ยเลี้ยง", label: "รายการค่าเบี้ยเลี้ยง", type: "expenseRows" },
-        { key: "รวมค่าใช้จ่าย",      label: "รวมค่าใช้จ่าย (บาท)", type: "text", placeholder: "คำนวณอัตโนมัติ" },
+        { key: "รวมค่าใช้จ่าย",      label: "รวมค่าใช้จ่าย (บาท)", type: "totalCost" },
         { key: "พาหนะเดินทาง",       label: "พาหนะเดินทาง",      type: "vehicleCheck" },
         { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel",  placeholder: "0XX-XXX-XXXX" },
       ],
@@ -487,8 +486,11 @@
       } else if (field.key === "จำนวนคืน") {
         input = '<input type="text" id="t7_numNights" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
 
+      } else if (field.type === "totalCost") {
+        input = '<input type="text" id="t7_totalCost" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);font-weight:500;color:#1A6B1A;">';
+
       } else if (field.key === "รวมค่าใช้จ่าย") {
-        input = '<input type="text" id="t7_totalCost" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
+        input = '<input type="text" id="t7_totalCost" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);font-weight:500;color:#1A6B1A;">';
 
       } else if (field.placeholder === "คำนวณอัตโนมัติ") {
         input = '<input type="text" id="f_' + i + '" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
@@ -711,8 +713,8 @@
         answers["ประเภทการเบิก"]      = getExpenseTypes();
         answers["หน่วยงานที่จัดให้"]  = document.getElementById("agencyInput")?.value || "";
         answers["รายการค่าเบี้ยเลี้ยง"] = getExpenseRowsData();
-        const totalEl = document.getElementById("expGrandTotal");
-        if (totalEl) answers["รวมค่าใช้จ่าย"] = totalEl.textContent.replace(" บาท","");
+        const costEl = document.getElementById('t7_totalCost');
+        if (costEl) answers["รวมค่าใช้จ่าย"] = costEl.value.replace(' บาท','').replace(/,/g,'');
         return;
       }
       if (field.type === "expenseRows") return;
@@ -1049,7 +1051,6 @@
       .forEach(el => { if (!el.classList.contains('sum-header')) t += parseFloat(el.textContent.replace(/,/g,'')) || 0; });
     const totalEl = document.getElementById('expGrandTotal');
     if (totalEl) totalEl.textContent = Math.round(t).toLocaleString() + ' บาท';
-    // อัปเดต input รวมค่าใช้จ่าย (id t7_totalCost)
     const costEl = document.getElementById('t7_totalCost');
     if (costEl) costEl.value = Math.round(t).toLocaleString() + ' บาท';
   }
