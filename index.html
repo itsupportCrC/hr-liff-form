@@ -36,6 +36,7 @@
     .photo-slot input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
     .photo-slot img { width: 100%; height: 100%; object-fit: cover; }
     .photo-slot .placeholder { font-size: 1.8rem; color: #ccc; }
+    .exp-selected { border-color: #1A6B1A !important; background: #EAF3DE !important; }
     .photo-slot .remove-btn { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.5); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; cursor: pointer; display: none; }
     /* File upload section */
     .file-section { margin: 0 16px 16px; }
@@ -220,8 +221,40 @@
       ],
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nเจ้าหน้าที่จะติดต่อกลับโดยเร็วค่ะ\nขอบคุณค่ะ 🌷",
     },
+    "7": {
+      sheetName: "เบิกเบี้ยเลี้ยง", title: "เบิกเบี้ยเลี้ยง", icon: "💸", hasFile: true,
+      fields: [
+        { key: "บริษัท",             label: "บริษัท",             type: "company" },
+        { key: "สาขา",               label: "สาขา",               type: "branch" },
+        { key: "รหัสพนักงาน",        label: "รหัสพนักงาน",        type: "text",   placeholder: "เช่น EMP001" },
+        { key: "ชื่อ-สกุล",          label: "ชื่อ-สกุล (ผู้เบิก)", type: "text",  placeholder: "ชื่อ นามสกุล" },
+        { key: "ตำแหน่ง",            label: "ตำแหน่ง",            type: "text",   placeholder: "ระบุตำแหน่ง" },
+        { key: "ฝ่าย",               label: "ฝ่าย",               type: "select", opts: ["การเงิน","การตลาด","ขาย","คลังสินค้า","จัดซื้อ","จัดส่ง","ซ่อมบำรุง","บริหาร","บัญชี","บุคคล","ผู้บริหาร","IT"] },
+        { key: "ผู้เดินทางร่วม",     label: "ผู้เดินทางร่วม",     type: "travelers" },
+        { key: "วัตถุประสงค์",       label: "วัตถุประสงค์",       type: "select",
+          opts: ["ปฏิบัติงาน","ดูงาน/สัมนา/อบรม","กิจกรรม"],
+          conditional: { "กิจกรรม": { key: "ระบุกิจกรรม", label: "ระบุกิจกรรม", type: "text", placeholder: "ระบุรายละเอียด" } }
+        },
+        { key: "ลักษณะการเดินทาง",   label: "ลักษณะการเดินทาง",  type: "select", opts: ["ในประเทศ","ต่างประเทศ"] },
+        { key: "เดินทางจาก",         label: "จาก",                type: "text",   placeholder: "ต้นทาง" },
+        { key: "เดินทางไปยัง",       label: "ไปยัง",              type: "text",   placeholder: "ปลายทาง" },
+        { key: "วันที่เริ่มเดินทาง", label: "ตั้งแต่วันที่",      type: "date" },
+        { key: "วันที่สิ้นสุดการเดินทาง", label: "ถึงวันที่",     type: "date" },
+        { key: "จำนวนวัน",           label: "จำนวนวัน (อัตโนมัติ)", type: "text", placeholder: "คำนวณอัตโนมัติ" },
+        { key: "จำนวนคืน",           label: "จำนวนคืน (อัตโนมัติ)", type: "text", placeholder: "คำนวณอัตโนมัติ" },
+        { key: "เวลาออกเดินทาง",     label: "เวลาออกเดินทาง",    type: "timeTH" },
+        { key: "เวลากลับถึง",        label: "เวลากลับถึง",        type: "timeTH" },
+        { key: "ประเภทการเบิก",      label: "ประเภทการเบิก",      type: "expenseType" },
+        { key: "หน่วยงานที่จัดให้",  label: "หน่วยงานที่จัดให้",  type: "text",  placeholder: "ชื่อหน่วยงาน", required: false },
+        { key: "รายการค่าเบี้ยเลี้ยง", label: "รายการค่าเบี้ยเลี้ยง", type: "expenseRows" },
+        { key: "รวมค่าใช้จ่าย",      label: "รวมค่าใช้จ่าย (บาท)", type: "text", placeholder: "คำนวณอัตโนมัติ" },
+        { key: "พาหนะเดินทาง",       label: "พาหนะเดินทาง",      type: "vehicleCheck" },
+        { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel",  placeholder: "0XX-XXX-XXXX" },
+      ],
+      ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\\nจะดำเนินการและติดต่อกลับภายใน 1–3 วันทำการค่ะ\\nขอบคุณค่ะ 🌷",
+    },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycbw3g7LFTlQMoQSXrDZ6AolFxVJ9GOy6cKB0R37U4Q2cwRqmRTl7dx8oFiHbqfGO4xo/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbxb5seM30crVCQBcAFYf9TAFa_h5JefMJ4DvX5sD2eOVNU5Tc118u6zzAFT927YQ0inAg/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -355,6 +388,64 @@
       } else if (field.type === "branch") {
         input = '<select id="f_' + i + '">'
           + '<option value="">— เลือกบริษัทก่อน —</option></select>';
+
+      } else if (field.type === "travelers") {
+        // Dynamic ผู้เดินทางร่วม
+        travelerCount = 0;
+        input = `<div id="travelerList"></div>
+          <button type="button" onclick="addTraveler()" style="display:flex;align-items:center;justify-content:center;gap:6px;border:1px dashed #1A6B1A;border-radius:var(--border-radius-md);color:#1A6B1A;font-size:13px;padding:8px;background:none;cursor:pointer;width:100%;margin-top:4px;">
+            + เพิ่มผู้เดินทาง (สูงสุด 10 คน)</button>`;
+
+      } else if (field.type === "timeTH") {
+        const selId = "f_" + i;
+        input = `<select id="${selId}" style="padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;"><option value="">-- เลือกเวลา --</option></select>`;
+        setTimeout(function() { buildTimeTH(selId); }, 100);
+
+      } else if (field.type === "expenseType") {
+        input = `<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">
+          <label class="exp-type-item" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="chk-real" value="จ่ายจริง" onchange="onExpenseTypeCheck(this)" style="width:16px;height:16px;"> จ่ายจริง</label>
+          <label class="exp-type-item" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="chk-only" value="เบิกเฉพาะค่าเบี้ยเลี้ยง" onchange="onExpenseTypeCheck(this)" style="width:16px;height:16px;"> เบิกเฉพาะค่าเบี้ยเลี้ยง (หน่วยงานจัดที่พัก/อาหารให้)</label>
+          <label class="exp-type-item" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;">
+            <input type="checkbox" id="chk-lvl" value="เบิกตามระดับพนักงาน" onchange="onExpenseTypeCheck(this)" style="width:16px;height:16px;"> เบิกตามระดับพนักงาน</label>
+        </div>
+        <div id="agencySection" style="display:none;margin-top:6px;">
+          <input type="text" id="agencyInput" placeholder="ระบุหน่วยงานที่จัดให้" style="padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;">
+        </div>
+        <div id="levelSection" style="display:none;margin-top:10px;">
+          <p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:4px;margin-bottom:6px;">เลือกระดับพนักงาน</p>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <label class="exp-type-item" id="lbl-mgr" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;">
+              <input type="checkbox" onchange="toggleExpLevel('mgr',this.checked)" style="width:16px;height:16px;"> ผจก./ผอ.</label>
+            <label class="exp-type-item" id="lbl-head" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;">
+              <input type="checkbox" onchange="toggleExpLevel('head',this.checked)" style="width:16px;height:16px;"> หัวหน้างาน/ผู้ช่วย ผจก.</label>
+            <label class="exp-type-item" id="lbl-staff" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;">
+              <input type="checkbox" onchange="toggleExpLevel('staff',this.checked)" style="width:16px;height:16px;"> เจ้าหน้าที่หรือพนักงาน</label>
+          </div>
+          <div id="mgrRows" style="display:none;"><div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;margin-top:6px;"><p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;">ค่าเบี้ยเลี้ยง ผจก./ผอ.</p><div id="mgrItems"></div><button type="button" onclick="addExpRow('mgr')" style="display:flex;align-items:center;justify-content:center;gap:4px;border:1px dashed #1A6B1A;border-radius:var(--border-radius-md);color:#1A6B1A;font-size:12px;padding:6px;background:none;cursor:pointer;width:100%;margin-top:6px;">+ เพิ่มรายการ</button></div></div>
+          <div id="headRows" style="display:none;"><div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;margin-top:6px;"><p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;">ค่าเบี้ยเลี้ยง หัวหน้างาน/ผู้ช่วย ผจก.</p><div id="headItems"></div><button type="button" onclick="addExpRow('head')" style="display:flex;align-items:center;justify-content:center;gap:4px;border:1px dashed #1A6B1A;border-radius:var(--border-radius-md);color:#1A6B1A;font-size:12px;padding:6px;background:none;cursor:pointer;width:100%;margin-top:6px;">+ เพิ่มรายการ</button></div></div>
+          <div id="staffRows" style="display:none;"><div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;margin-top:6px;"><p style="font-size:12px;font-weight:500;color:var(--color-text-secondary);margin-bottom:8px;">ค่าเบี้ยเลี้ยง เจ้าหน้าที่/พนักงาน</p><div id="staffItems"></div><button type="button" onclick="addExpRow('staff')" style="display:flex;align-items:center;justify-content:center;gap:4px;border:1px dashed #1A6B1A;border-radius:var(--border-radius-md);color:#1A6B1A;font-size:12px;padding:6px;background:none;cursor:pointer;width:100%;margin-top:6px;">+ เพิ่มรายการ</button></div></div>
+          <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+            <span style="font-size:13px;color:var(--color-text-secondary);font-weight:500;">รวมค่าใช้จ่ายทั้งหมด</span>
+            <span id="expGrandTotal" style="font-size:13px;font-weight:600;color:#1A6B1A;">0 บาท</span>
+          </div>
+        </div>`;
+
+      } else if (field.type === "expenseRows") {
+        input = ""; // จัดการโดย expenseType แล้ว
+        const wrapper = document.createElement("div");
+        wrapper.id = "field_" + i;
+        wrapper.style.display = "none";
+        document.getElementById("formFields").appendChild(wrapper);
+        continue;
+
+      } else if (field.type === "vehicleCheck") {
+        const vOpts = VEHICLE_LIST.map(function(v) {
+          return `<label class="vehicle-chk" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);cursor:pointer;font-size:13px;" onclick="this.classList.toggle('exp-selected',this.querySelector('input').checked)">
+            <input type="checkbox" value="${v}" style="width:16px;height:16px;"> ${v}</label>`;
+        }).join('');
+        input = `<div style="display:flex;flex-direction:column;gap:6px;margin-top:4px;">${vOpts}</div>`;
 
       } else if (field.type === "select") {
         const opts = field.opts.map(function(o) {
@@ -541,6 +632,30 @@
         answers[field.key] = val;
       }
 
+      // เก็บค่า special types ของ Topic 7
+      if (field.type === "travelers") {
+        answers["ผู้เดินทางร่วม"] = getTravelersData();
+        continue;
+      }
+      if (field.type === "expenseType") {
+        answers["ประเภทการเบิก"]      = getExpenseTypes();
+        answers["หน่วยงานที่จัดให้"]  = document.getElementById("agencyInput")?.value || "";
+        answers["รายการค่าเบี้ยเลี้ยง"] = getExpenseRowsData();
+        const totalEl = document.getElementById("expGrandTotal");
+        if (totalEl) answers["รวมค่าใช้จ่าย"] = totalEl.textContent.replace(" บาท","");
+        continue;
+      }
+      if (field.type === "expenseRows") continue;
+      if (field.type === "vehicleCheck") {
+        answers["พาหนะเดินทาง"] = getVehicles();
+        continue;
+      }
+      if (field.type === "timeTH") {
+        const el = document.getElementById("f_" + i);
+        answers[field.key] = el ? el.value : "";
+        continue;
+      }
+
       // เก็บค่า conditional field ถ้ามี
       if (field.conditional) {
         const condEl = document.getElementById("fc_" + i);
@@ -714,6 +829,163 @@
         if (val) el.value = val;
       }
     });
+  }
+
+  // ===== Topic 7 Special Fields =====
+  const DEPT_LIST = ["การเงิน","การตลาด","ขาย","คลังสินค้า","จัดซื้อ","จัดส่ง","ซ่อมบำรุง","บริหาร","บัญชี","บุคคล","ผู้บริหาร","IT"];
+  const VEHICLE_LIST = ["รถยนต์ส่วนตัว","รถเช่า","รถยนต์บริษัท","รถไฟ","เครื่องบิน"];
+  let travelerCount = 0;
+  const expenseRows = { mgr: 0, head: 0, staff: 0 };
+
+  // Render dropdown เวลาไทย
+  function buildTimeTH(selId) {
+    const s = document.getElementById(selId);
+    if (!s) return;
+    s.innerHTML = '<option value="">-- เลือกเวลา --</option>';
+    for (let h = 0; h < 24; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        const hh = String(h).padStart(2,'0'), mm = String(m).padStart(2,'0');
+        const o = document.createElement('option');
+        o.value = `${hh}:${mm}`;
+        o.textContent = `${hh}:${mm} น.`;
+        s.appendChild(o);
+      }
+    }
+  }
+
+  function calcTravelDays() {
+    const f = document.getElementById('t7_dateFrom')?.value;
+    const t = document.getElementById('t7_dateTo')?.value;
+    if (!f || !t) return;
+    const d = Math.max(0, (new Date(t) - new Date(f)) / 86400000);
+    const dayEl = document.querySelector('[data-key="จำนวนวัน"]');
+    const nightEl = document.querySelector('[data-key="จำนวนคืน"]');
+    if (dayEl)   dayEl.value = Math.round(d+1) + ' วัน';
+    if (nightEl) nightEl.value = Math.round(d) + ' คืน';
+  }
+
+  function addTraveler() {
+    if (travelerCount >= 10) return;
+    travelerCount++;
+    const list = document.getElementById('travelerList');
+    const div  = document.createElement('div');
+    div.id = 'traveler_' + travelerCount;
+    div.style.cssText = 'background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px 12px;margin-bottom:8px;position:relative;';
+    const deptOpts = DEPT_LIST.map(d => `<option>${d}</option>`).join('');
+    div.innerHTML = `<p style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:6px;">คนที่ ${travelerCount}</p>
+      <button onclick="removeTraveler(${travelerCount})" style="position:absolute;top:8px;right:10px;background:none;border:none;color:var(--color-text-tertiary);font-size:16px;cursor:pointer;">✕</button>
+      <div class="field" style="margin-bottom:6px;">
+        <label style="font-size:12px;color:var(--color-text-secondary);">ชื่อ-สกุล</label>
+        <input type="text" id="tr${travelerCount}_name" placeholder="ชื่อ นามสกุล" style="padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+        <div class="field">
+          <label style="font-size:12px;color:var(--color-text-secondary);">ตำแหน่ง</label>
+          <input type="text" id="tr${travelerCount}_pos" placeholder="ตำแหน่ง" style="padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;">
+        </div>
+        <div class="field">
+          <label style="font-size:12px;color:var(--color-text-secondary);">ฝ่าย</label>
+          <select id="tr${travelerCount}_dept" style="padding:7px 10px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);width:100%;">
+            <option value="">-- เลือก --</option>${deptOpts}
+          </select>
+        </div>
+      </div>`;
+    list.appendChild(div);
+  }
+
+  function removeTraveler(idx) {
+    document.getElementById('traveler_' + idx)?.remove();
+    travelerCount = Math.max(0, travelerCount - 1);
+  }
+
+  function getTravelersData() {
+    const result = [];
+    document.querySelectorAll('[id^="traveler_"]').forEach(function(div) {
+      const id = div.id.split('_')[1];
+      const name = document.getElementById('tr'+id+'_name')?.value || '';
+      const pos  = document.getElementById('tr'+id+'_pos')?.value  || '';
+      const dept = document.getElementById('tr'+id+'_dept')?.value || '';
+      if (name) result.push(name + ' (' + pos + '/' + dept + ')');
+    });
+    return result.join(', ');
+  }
+
+  function onExpenseTypeCheck(cb, type) {
+    cb.closest('.exp-type-item').classList.toggle('exp-selected', cb.checked);
+    const anyChecked = document.querySelectorAll('.exp-type-item input:checked').length > 0;
+    document.getElementById('agencySection').style.display =
+      document.getElementById('chk-only')?.checked ? 'block' : 'none';
+    document.getElementById('levelSection').style.display = anyChecked ? 'block' : 'none';
+  }
+
+  function toggleExpLevel(type, show) {
+    document.getElementById('lbl-' + type).classList.toggle('exp-selected', show);
+    document.getElementById(type + 'Rows').style.display = show ? 'block' : 'none';
+    if (show && document.getElementById(type + 'Items').children.length === 0) addExpRow(type);
+  }
+
+  function addExpRow(type) {
+    expenseRows[type]++;
+    const idx = expenseRows[type];
+    const div = document.createElement('div');
+    div.id = type + 'row' + idx;
+    div.style.cssText = 'margin-bottom:8px;border-bottom:0.5px solid var(--color-border-tertiary);padding-bottom:8px;';
+    div.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:11px;color:var(--color-text-tertiary);">รายการที่ ${idx}</span>
+        ${idx > 1 ? `<button onclick="document.getElementById('${type}row${idx}').remove();calcExpTotal();" style="background:none;border:none;color:var(--color-text-tertiary);font-size:12px;cursor:pointer;">ลบ</button>` : ''}
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;">
+        <div><input type="number" placeholder="0" min="0" oninput="calcExpRow('${type}',${idx})" id="${type}r${idx}a" style="padding:6px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:12px;text-align:center;width:100%;background:var(--color-background-primary);color:var(--color-text-primary);">
+          <p style="font-size:10px;color:var(--color-text-tertiary);text-align:center;margin-top:2px;">บาท/วัน</p></div>
+        <div><input type="number" placeholder="0" min="0" oninput="calcExpRow('${type}',${idx})" id="${type}r${idx}b" style="padding:6px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:12px;text-align:center;width:100%;background:var(--color-background-primary);color:var(--color-text-primary);">
+          <p style="font-size:10px;color:var(--color-text-tertiary);text-align:center;margin-top:2px;">คน</p></div>
+        <div><input type="number" placeholder="0" min="0" oninput="calcExpRow('${type}',${idx})" id="${type}r${idx}c" style="padding:6px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);font-size:12px;text-align:center;width:100%;background:var(--color-background-primary);color:var(--color-text-primary);">
+          <p style="font-size:10px;color:var(--color-text-tertiary);text-align:center;margin-top:2px;">วัน</p></div>
+        <div><div id="${type}r${idx}s" style="background:#EAF3DE;color:#27500A;border:0.5px solid #b7d9a0;border-radius:var(--border-radius-md);padding:6px;font-size:12px;font-weight:500;text-align:center;">0</div>
+          <p style="font-size:10px;color:var(--color-text-tertiary);text-align:center;margin-top:2px;">บาท</p></div>
+      </div>`;
+    document.getElementById(type + 'Items').appendChild(div);
+  }
+
+  function calcExpRow(type, idx) {
+    const a = parseFloat(document.getElementById(type+'r'+idx+'a')?.value) || 0;
+    const b = parseFloat(document.getElementById(type+'r'+idx+'b')?.value) || 0;
+    const c = parseFloat(document.getElementById(type+'r'+idx+'c')?.value) || 0;
+    const el = document.getElementById(type+'r'+idx+'s');
+    if (el) el.textContent = Math.round(a*b*c).toLocaleString();
+    calcExpTotal();
+  }
+
+  function calcExpTotal() {
+    let t = 0;
+    document.querySelectorAll('[id$="s"][id^="mgr"],[id$="s"][id^="head"],[id$="s"][id^="staff"]')
+      .forEach(el => { if (!el.classList.contains('sum-header')) t += parseFloat(el.textContent.replace(/,/g,'')) || 0; });
+    const totalEl = document.getElementById('expGrandTotal');
+    if (totalEl) totalEl.textContent = Math.round(t).toLocaleString() + ' บาท';
+    const totalInput = document.querySelector('[data-key="รวมค่าใช้จ่าย"]');
+    if (totalInput) totalInput.value = Math.round(t).toString();
+  }
+
+  function getExpenseTypes() {
+    return Array.from(document.querySelectorAll('.exp-type-item input:checked')).map(cb => cb.value).join(', ');
+  }
+
+  function getExpenseRowsData() {
+    const result = [];
+    ['mgr','head','staff'].forEach(function(type) {
+      const labels = { mgr: 'ผจก./ผอ.', head: 'หัวหน้า/ผู้ช่วย', staff: 'พนักงาน' };
+      const rows = document.getElementById(type + 'Items');
+      if (!rows || rows.style.display === 'none') return;
+      let total = 0;
+      rows.querySelectorAll('[id$="s"]').forEach(el => total += parseFloat(el.textContent.replace(/,/g,'')) || 0);
+      if (total > 0) result.push(labels[type] + ': ' + total.toLocaleString() + ' บาท');
+    });
+    return result.join(' | ');
+  }
+
+  function getVehicles() {
+    return Array.from(document.querySelectorAll('.vehicle-chk input:checked')).map(cb => cb.value).join(', ');
   }
 
   // ===== File Upload (topic 4) =====
