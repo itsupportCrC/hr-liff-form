@@ -706,7 +706,9 @@
       const isOptional = field.required === false;
       const isSpecial  = ["travelers","expenseType","expenseRows","vehicleCheck","timeTH","totalCost"].includes(field.type);
 
-      if (!val && !isBranch && !isOptional && !isSpecial) {
+      // readonly fields และ optional fields ไม่ต้อง validate
+      const isReadonly = el && el.hasAttribute && el.hasAttribute('readonly');
+      if (!val && !isBranch && !isOptional && !isSpecial && !isReadonly) {
         div.classList.add("error"); valid = false;
       } else {
         div.classList.remove("error");
