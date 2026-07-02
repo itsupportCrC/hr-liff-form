@@ -258,13 +258,13 @@
         { key: "เดินทางไปยัง",       label: "ไปยัง",              type: "text",   placeholder: "ปลายทาง" },
         { key: "วันที่เริ่มเดินทาง", label: "ตั้งแต่วันที่",      type: "date" },
         { key: "วันที่สิ้นสุดการเดินทาง", label: "ถึงวันที่",     type: "date" },
-        { key: "จำนวนวัน",  label: "จำนวนวัน (อัตโนมัติ)",  type: "text", placeholder: "คำนวณอัตโนมัติ" },
-        { key: "จำนวนคืน", label: "จำนวนคืน (อัตโนมัติ)", type: "text", placeholder: "คำนวณอัตโนมัติ" },
+        { key: "จำนวนวัน",  label: "จำนวนวัน (อัตโนมัติ)",  type: "text", placeholder: "คำนวณอัตโนมัติ", required: false },
+        { key: "จำนวนคืน", label: "จำนวนคืน (อัตโนมัติ)", type: "text", placeholder: "คำนวณอัตโนมัติ", required: false },
         { key: "เวลาออกเดินทาง",     label: "เวลาออกเดินทาง",    type: "timeTH" },
         { key: "เวลากลับถึง",        label: "เวลากลับถึง",        type: "timeTH" },
         { key: "ประเภทการเบิก",      label: "ประเภทการเบิก",      type: "expenseType" },
         { key: "รายการค่าเบี้ยเลี้ยง", label: "รายการค่าเบี้ยเลี้ยง", type: "expenseRows" },
-        { key: "รวมค่าใช้จ่าย",      label: "รวมค่าใช้จ่าย (บาท)", type: "totalCost" },
+        { key: "รวมค่าใช้จ่าย",      label: "รวมค่าใช้จ่าย (บาท)", type: "totalCost", required: false },
         { key: "พาหนะเดินทาง",       label: "พาหนะเดินทาง",      type: "vehicleCheck" },
         { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel",  placeholder: "0XX-XXX-XXXX" },
       ],
@@ -691,17 +691,26 @@
     let valid = true;
 
     flow.fields.forEach(function(field, i) {
-      const el  = document.getElementById("f_" + i);
+      // หา element — date ของ topic 7 ใช้ id พิเศษ
+      let el;
+      if (field.key === "วันที่เริ่มเดินทาง")      el = document.getElementById("t7_dateFrom");
+      else if (field.key === "วันที่สิ้นสุดการเดินทาง") el = document.getElementById("t7_dateTo");
+      else if (field.key === "จำนวนวัน")           el = document.getElementById("t7_numDays");
+      else if (field.key === "จำนวนคืน")          el = document.getElementById("t7_numNights");
+      else if (field.key === "รวมค่าใช้จ่าย")      el = document.getElementById("t7_totalCost");
+      else                                          el = document.getElementById("f_" + i);
+
       const val = el ? el.value.trim() : "";
       const div = document.getElementById("field_" + i);
       const isBranch   = field.type === "branch";
       const isOptional = field.required === false;
+      const isSpecial  = ["travelers","expenseType","expenseRows","vehicleCheck","timeTH","totalCost"].includes(field.type);
 
-      if (!val && !isBranch && !isOptional) {
+      if (!val && !isBranch && !isOptional && !isSpecial) {
         div.classList.add("error"); valid = false;
       } else {
         div.classList.remove("error");
-        answers[field.key] = val;
+        if (!isSpecial) answers[field.key] = val;
       }
 
       // เก็บค่า special types ของ Topic 7
