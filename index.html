@@ -481,6 +481,12 @@
       } else if (field.type === "date" && field.key === "วันที่สิ้นสุดการเดินทาง") {
         input = '<input type="date" id="t7_dateTo" onchange="calcTravelDays()">';
 
+      } else if (field.key === "จำนวนวัน") {
+        input = '<input type="text" id="t7_numDays" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
+
+      } else if (field.key === "จำนวนคืน") {
+        input = '<input type="text" id="t7_numNights" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
+
       } else if (field.placeholder === "คำนวณอัตโนมัติ") {
         input = '<input type="text" id="f_' + i + '" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
 
@@ -925,14 +931,10 @@
     const toEl   = document.getElementById('t7_dateTo');
     if (!fromEl || !toEl || !fromEl.value || !toEl.value) return;
     const d = Math.max(0, (new Date(toEl.value) - new Date(fromEl.value)) / 86400000);
-    const days   = Math.round(d + 1);
-    const nights = Math.round(d);
-    // หา input จำนวนวัน/คืน จาก field ที่อยู่ใน #formFields และมี placeholder คำนวณอัตโนมัติ
-    const inputs = document.querySelectorAll('#formFields input[placeholder="คำนวณอัตโนมัติ"]');
-    inputs.forEach(function(el, idx) {
-      if (idx === 0) el.value = days + ' วัน';
-      if (idx === 1) el.value = nights + ' คืน';
-    });
+    const daysEl   = document.getElementById('t7_numDays');
+    const nightsEl = document.getElementById('t7_numNights');
+    if (daysEl)   daysEl.value   = Math.round(d + 1) + ' วัน';
+    if (nightsEl) nightsEl.value = Math.round(d) + ' คืน';
   }
 
   function addTraveler() {
