@@ -145,13 +145,25 @@
         { key: "ชื่อ-สกุล", label: "ชื่อ-นามสกุล", type: "text", placeholder: "ชื่อ นามสกุล" },
         { key: "ตำแหน่ง", label: "ตำแหน่ง", type: "text", placeholder: "ระบุตำแหน่ง" },
         { key: "ประเภท", label: "ประเภท", type: "select",
-          opts: ["เบิกของสวัสดิการ","เบิกสวัสดิการตามสิทธิ","สมัครกองทุนสำรองเลี้ยงชีพ"],
+          opts: ["เบิกของสวัสดิการ","เบิกสวัสดิการตามสิทธิ","สมัครกองทุนสำรองเลี้ยงชีพ","เบิกยา","แจ้งทำความดี"],
           conditional: {
             "เบิกของสวัสดิการ":     { key: "รายการเบิก",  label: "รายการที่ต้องการเบิก", type: "select", opts: ["บัตรพนักงาน","เสื้อยูนิฟอร์ม","สายคล้องบัตร","กรอบบัตร"] },
             "เบิกสวัสดิการตามสิทธิ": { key: "ประเภทสิทธิ", label: "ประเภทสวัสดิการ",      type: "select", opts: ["คลอดบุตร","งานศพ","ภัยพิบัติ"] },
+            "เบิกยา": { type: "multi", fields: [
+              { key: "ฝ่าย-เบิกยา",    label: "ฝ่าย",      type: "select", opts: ["การเงิน","การตลาด","ขาย","คลังสินค้า","จัดซื้อ","จัดส่ง","ซ่อมบำรุง","บริหาร","บัญชี","บุคคล","ผู้บริหาร","IT"] },
+              { key: "ตำแหน่ง-เบิกยา", label: "ตำแหน่ง",   type: "text",     placeholder: "ระบุตำแหน่ง" },
+              { key: "อาการป่วย",       label: "อาการป่วย",  type: "textarea", placeholder: "ระบุอาการป่วย" },
+            ]},
+            "แจ้งทำความดี": { type: "multi", fields: [
+              { key: "ฝ่าย-ทำความดี",        label: "ฝ่าย",                  type: "select", opts: ["การเงิน","การตลาด","ขาย","คลังสินค้า","จัดซื้อ","จัดส่ง","ซ่อมบำรุง","บริหาร","บัญชี","บุคคล","ผู้บริหาร","IT"] },
+              { key: "ตำแหน่ง-ทำความดี",     label: "ตำแหน่ง",               type: "text",     placeholder: "ระบุตำแหน่ง" },
+              { key: "ชื่อพนักงานทำความดี",   label: "ชื่อพนักงานทำความดี",   type: "text",     placeholder: "ชื่อ นามสกุล" },
+              { key: "รายละเอียดการทำความดี", label: "รายละเอียดการทำความดี", type: "textarea", placeholder: "ระบุรายละเอียด" },
+            ]},
           }
         },
-        { key: "รายละเอียด", label: "รายละเอียด (ถ้ามี)", type: "textarea", placeholder: "อธิบายรายละเอียดเพิ่มเติม", required: false },
+        { key: "รายละเอียด", label: "รายละเอียด (ถ้ามี)", type: "textarea", placeholder: "อธิบายรายละเอียดเพิ่มเติม", required: false,
+          hideWhen: ["เบิกยา","แจ้งทำความดี"] },
         { key: "เบอร์โทรติดต่อกลับ", label: "เบอร์โทรติดต่อกลับ", type: "tel", placeholder: "0XX-XXX-XXXX" },
       ],
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\nจะดำเนินการและติดต่อกลับภายใน 1–3 วันทำการค่ะ\nขอบคุณค่ะ 🌷",
@@ -491,27 +503,56 @@
     const existing = document.getElementById("conditional_" + fieldIdx);
     if (existing) existing.remove();
 
-    // ถ้าเลือกค่าที่มี conditional
-    const condField = field.conditional[val];
-    if (!condField) return;
+    // ซ่อน/แสดง field ที่มี hideWhen
+    flow.fields.forEach(function(f, fi) {
+      if (f.hideWhen && f.hideWhen.includes(val)) {
+        const hw = document.getElementById("field_" + fi);
+        if (hw) hw.style.display = "none";
+      } else if (f.hideWhen) {
+        const hw = document.getElementById("field_" + fi);
+        if (hw) hw.style.display = "";
+      }
+    });
 
-    // สร้าง field ใหม่
+    // ถ้าเลือกค่าที่มี conditional
+    const condDef = field.conditional[val];
+    if (!condDef) return;
+
     const div = document.createElement("div");
-    div.className = "field";
     div.id = "conditional_" + fieldIdx;
 
-    let input = "";
-    if (condField.type === "select") {
-      const opts = condField.opts.map(function(o) {
-        return '<option value="' + o + '">' + o + '</option>';
-      }).join("");
-      input = '<select id="fc_' + fieldIdx + '"><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
+    // รองรับ type: "multi" (หลาย fields)
+    if (condDef.type === "multi" && condDef.fields) {
+      let html = "";
+      condDef.fields.forEach(function(cf, ci) {
+        let input = "";
+        if (cf.type === "select") {
+          const opts = cf.opts.map(function(o) { return '<option value="' + o + '">' + o + '</option>'; }).join("");
+          input = '<select id="fmc_' + fieldIdx + '_' + ci + '"><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
+        } else if (cf.type === "textarea") {
+          input = '<textarea id="fmc_' + fieldIdx + '_' + ci + '" placeholder="' + (cf.placeholder||"") + '" rows="3"></textarea>';
+        } else {
+          input = '<input type="text" id="fmc_' + fieldIdx + '_' + ci + '" placeholder="' + (cf.placeholder||"") + '">';
+        }
+        html += '<div class="field" style="margin-bottom:8px;">'
+          + '<label>' + cf.label + ' <span class="required">*</span></label>'
+          + input + '<div class="error-msg">กรุณากรอกข้อมูลนี้ค่ะ</div></div>';
+      });
+      div.innerHTML = html;
     } else {
-      input = '<input type="text" id="fc_' + fieldIdx + '" placeholder="' + (condField.placeholder || "") + '">';
+      // single conditional field
+      let input = "";
+      if (condDef.type === "select") {
+        const opts = condDef.opts.map(function(o) { return '<option value="' + o + '">' + o + '</option>'; }).join("");
+        input = '<select id="fc_' + fieldIdx + '"><option value="">— กรุณาเลือก —</option>' + opts + '</select>';
+      } else if (condDef.type === "textarea") {
+        input = '<textarea id="fc_' + fieldIdx + '" placeholder="' + (condDef.placeholder||"") + '" rows="3"></textarea>';
+      } else {
+        input = '<input type="text" id="fc_' + fieldIdx + '" placeholder="' + (condDef.placeholder||"") + '">';
+      }
+      div.innerHTML = '<div class="field"><label>' + condDef.label + ' <span class="required">*</span></label>'
+        + input + '<div class="error-msg">กรุณากรอกข้อมูลนี้ค่ะ</div></div>';
     }
-
-    div.innerHTML = '<label>' + condField.label + ' <span class="required">*</span></label>'
-      + input + '<div class="error-msg">กรุณากรอกข้อมูลนี้ค่ะ</div>';
 
     // แทรกหลัง field ปัจจุบัน
     const parentField = document.getElementById("field_" + fieldIdx);
@@ -661,10 +702,19 @@
 
       // เก็บค่า conditional field ถ้ามี
       if (field.conditional) {
-        const condEl = document.getElementById("fc_" + i);
-        if (condEl && condEl.value.trim()) {
-          const condField = field.conditional[val];
-          if (condField) answers[condField.key] = condEl.value.trim();
+        const condDef = field.conditional[val];
+        if (condDef) {
+          if (condDef.type === "multi" && condDef.fields) {
+            // multi fields
+            condDef.fields.forEach(function(cf, ci) {
+              const mEl = document.getElementById("fmc_" + i + "_" + ci);
+              if (mEl) answers[cf.key] = mEl.value.trim();
+            });
+          } else {
+            // single conditional
+            const condEl = document.getElementById("fc_" + i);
+            if (condEl) answers[condDef.key] = condEl.value.trim();
+          }
         }
       }
     });
@@ -861,10 +911,16 @@
     const t = document.getElementById('t7_dateTo')?.value;
     if (!f || !t) return;
     const d = Math.max(0, (new Date(t) - new Date(f)) / 86400000);
-    const dayEl   = document.querySelector('[data-key="จำนวนวัน"]');
-    const nightEl = document.querySelector('[data-key="จำนวนคืน"]');
-    if (dayEl)   dayEl.value   = Math.round(d+1) + ' วัน';
-    if (nightEl) nightEl.value = Math.round(d)   + ' คืน';
+    // หา input จำนวนวัน/คืน จาก placeholder
+    const allInputs = document.querySelectorAll('#formFields input[placeholder="คำนวณอัตโนมัติ"]');
+    allInputs.forEach(function(el) {
+      const label = el.closest('.field')?.querySelector('label')?.textContent || '';
+      if (label.includes('จำนวนวัน')) {
+        el.value = Math.round(d+1) + ' วัน';
+      } else if (label.includes('จำนวนคืน')) {
+        el.value = Math.round(d) + ' คืน';
+      }
+    });
   }
 
   function addTraveler() {
