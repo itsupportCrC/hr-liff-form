@@ -433,12 +433,12 @@
         </div>`;
 
       } else if (field.type === "expenseRows") {
-        input = ""; // จัดการโดย expenseType แล้ว
+        // จัดการโดย expenseType แล้ว ไม่ต้องสร้าง field
         const wrapper = document.createElement("div");
         wrapper.id = "field_" + i;
         wrapper.style.display = "none";
-        document.getElementById("formFields").appendChild(wrapper);
-        continue;
+        container.appendChild(wrapper);
+        return;
 
       } else if (field.type === "vehicleCheck") {
         const vOpts = VEHICLE_LIST.map(function(v) {
@@ -635,7 +635,7 @@
       // เก็บค่า special types ของ Topic 7
       if (field.type === "travelers") {
         answers["ผู้เดินทางร่วม"] = getTravelersData();
-        continue;
+        return;
       }
       if (field.type === "expenseType") {
         answers["ประเภทการเบิก"]      = getExpenseTypes();
@@ -643,17 +643,17 @@
         answers["รายการค่าเบี้ยเลี้ยง"] = getExpenseRowsData();
         const totalEl = document.getElementById("expGrandTotal");
         if (totalEl) answers["รวมค่าใช้จ่าย"] = totalEl.textContent.replace(" บาท","");
-        continue;
+        return;
       }
-      if (field.type === "expenseRows") continue;
+      if (field.type === "expenseRows") return;
       if (field.type === "vehicleCheck") {
         answers["พาหนะเดินทาง"] = getVehicles();
-        continue;
+        return;
       }
       if (field.type === "timeTH") {
-        const el = document.getElementById("f_" + i);
-        answers[field.key] = el ? el.value : "";
-        continue;
+        const el2 = document.getElementById("f_" + i);
+        answers[field.key] = el2 ? el2.value : "";
+        return;
       }
 
       // เก็บค่า conditional field ถ้ามี
