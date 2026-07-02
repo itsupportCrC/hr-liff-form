@@ -245,7 +245,7 @@
         { key: "ชื่อ-สกุล",          label: "ชื่อ-สกุล (ผู้เบิก)", type: "text",  placeholder: "ชื่อ นามสกุล" },
         { key: "ตำแหน่ง",            label: "ตำแหน่ง",            type: "text",   placeholder: "ระบุตำแหน่ง" },
         { key: "ฝ่าย",               label: "ฝ่าย",               type: "select", opts: ["การเงิน","การตลาด","ขาย","คลังสินค้า","จัดซื้อ","จัดส่ง","ซ่อมบำรุง","บริหาร","บัญชี","บุคคล","ผู้บริหาร","IT"] },
-        { key: "ผู้เดินทางร่วม",     label: "ผู้เดินทางร่วม",     type: "travelers" },
+        { key: "ผู้เดินทางร่วม",     label: "ผู้เดินทางร่วม",     type: "travelers", required: false },
         { key: "วัตถุประสงค์",       label: "วัตถุประสงค์",       type: "select",
           opts: ["ปฏิบัติงาน","ดูงาน/สัมนา/อบรม","กิจกรรม"],
           conditional: { "กิจกรรม": { key: "ระบุกิจกรรม", label: "ระบุกิจกรรม", type: "text", placeholder: "ระบุรายละเอียด" } }
@@ -472,13 +472,24 @@
       } else if (field.type === "textarea") {
         input = '<textarea id="f_' + i + '" placeholder="' + (field.placeholder || "") + '"></textarea>';
 
+      } else if (field.type === "date" && field.key === "วันที่เริ่มเดินทาง") {
+        input = '<input type="date" id="t7_dateFrom" onchange="calcTravelDays()">';
+
+      } else if (field.type === "date" && field.key === "วันที่สิ้นสุดการเดินทาง") {
+        input = '<input type="date" id="t7_dateTo" onchange="calcTravelDays()">';
+
+      } else if (field.placeholder === "คำนวณอัตโนมัติ") {
+        input = '<input type="text" id="f_' + i + '" placeholder="คำนวณอัตโนมัติ" readonly style="background:var(--color-background-secondary);">';
+
       } else {
         input = '<input type="' + (field.type || "text") + '" id="f_' + i + '" placeholder="' + (field.placeholder || "") + '">';
       }
 
-      const isRequired = field.type !== "branch" || Object.values(COMPANY_BRANCH).some(function(b) { return b.length > 0; });
+      const isOptional = field.required === false;
       div.innerHTML = '<label>' + field.label
-        + (field.type !== "branch" ? ' <span class="required">*</span>' : ' <span style="color:#888;font-size:0.8rem">(ถ้ามี)</span>')
+        + (field.type === "branch" ? ' <span style="color:#888;font-size:0.8rem">(ถ้ามี)</span>'
+          : isOptional ? ' <span style="color:#888;font-size:0.8rem">(ถ้ามี)</span>'
+          : ' <span class="required">*</span>')
         + '</label>' + input + '<div class="error-msg">กรุณากรอกข้อมูลนี้ค่ะ</div>';
       container.appendChild(div);
     });
@@ -907,19 +918,16 @@
   }
 
   function calcTravelDays() {
-    const f = document.getElementById('t7_dateFrom')?.value;
-    const t = document.getElementById('t7_dateTo')?.value;
-    if (!f || !t) return;
-    const d = Math.max(0, (new Date(t) - new Date(f)) / 86400000);
-    // หา input จำนวนวัน/คืน จาก placeholder
-    const allInputs = document.querySelectorAll('#formFields input[placeholder="คำนวณอัตโนมัติ"]');
-    allInputs.forEach(function(el) {
-      const label = el.closest('.field')?.querySelector('label')?.textContent || '';
-      if (label.includes('จำนวนวัน')) {
-        el.value = Math.round(d+1) + ' วัน';
-      } else if (label.includes('จำนวนคืน')) {
-        el.value = Math.round(d) + ' คืน';
-      }
+    const fromEl = document.getElementById('t7_dateFrom');
+    const toEl   = document.getElementById('t7_dateTo');
+    if (!fromEl || !toEl || !fromEl.value || !toEl.value) return;
+    const d = Math.max(0, (new Date(toEl.value) - new Date(fromEl.value)) / 86400000);
+    // หา input จากทุก input ที่ readonly และมี placeholder คำนวณอัตโนมัติ
+    document.querySelectorAll('#formFields input[readonly]').forEach(function(el) {
+      const lbl = el.closest('div')?.previousElementSibling?.textContent || 
+                  el.parentElement?.querySelector('label')?.textContent || '';
+      if (lbl.includes('จำนวนวัน'))  el.value = Math.round(d+1) + ' วัน';
+      if (lbl.includes('จำนวนคืน')) el.value = Math.round(d) + ' คืน';
     });
   }
 
