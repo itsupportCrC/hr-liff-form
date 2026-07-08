@@ -586,6 +586,21 @@
     } else if (parentField) {
       parentField.parentNode.appendChild(div);
     }
+
+    // แสดง photoSection เมื่อเลือก แจ้งทำความดี
+    const photoSec = document.getElementById("photoSection");
+    if (val === "แจ้งทำความดี") {
+      if (photoSec) {
+        photoSec.style.display = "block";
+        const title = document.getElementById("photoSectionTitle");
+        if (title) title.textContent = "📷 แนบรูปภาพ (กด + เพื่อเพิ่ม)";
+        if (document.getElementById("photoGrid").children.length === 0) addPhotoSlot();
+      }
+    } else {
+      // ซ่อน photoSection ถ้าเลือกอย่างอื่น (ยกเว้น topic ที่มี hasPhoto เอง)
+      const flow = FLOWS[TOPIC];
+      if (photoSec && !flow.hasPhoto) photoSec.style.display = "none";
+    }
   }
 
   function onCompanyChange() {
