@@ -84,9 +84,8 @@
     <div class="card-body" id="formFields"></div>
   </div>
   <div id="photoSection" class="photo-section" style="display:none;">
-    <h3 id="photoSectionTitle">📷 แนบรูปภาพ</h3>
+    <h3>📷 แนบรูปอุบัติเหตุ (สูงสุด 4 รูป)</h3>
     <div class="photo-grid" id="photoGrid"></div>
-    <button id="btnAddPhoto" class="btn-add-file" onclick="addPhotoSlot()" style="margin-top:8px;">+ เพิ่มรูป</button>
   </div>
   <div id="fileSection" class="file-section" style="display:none;">
     <h3>📎 แนบไฟล์เอกสาร</h3>
@@ -272,7 +271,7 @@
       ack: "✅ ฝ่ายบุคคลได้รับเรื่องแล้วค่ะ 📩\\nจะดำเนินการและติดต่อกลับภายใน 1–3 วันทำการค่ะ\\nขอบคุณค่ะ 🌷",
     },
   };
-  const GAS_URL = "https://script.google.com/macros/s/AKfycby4ptU_5SVn0So54XZUPx9xJDfQlaF9zBZBXakJYBnRfZkAmOgPMYZI2MZ4MZEF1R4d/exec";
+  const GAS_URL = "https://script.google.com/macros/s/AKfycbzPeDoWwQ5oaZMlbhJkl0mAVpNSYLJEUd5LAA7w7dd712sNimY0ZbL1MyGlsTZOWagZsg/exec";
   let userProfile = {};
 
   // ===== COMPANY_BRANCH =====
@@ -512,7 +511,11 @@
       container.appendChild(div);
     });
 
-    // Photo/File section จัดการโดย renderFileSectionIfNeeded แล้ว
+    // Photo section สำหรับ topic 3
+    if (flow.hasPhoto) {
+      document.getElementById("photoSection").style.display = "block";
+      renderPhotoGrid();
+    }
   }
 
   // Conditional Field — แสดง/ซ่อน field ตามค่าที่เลือก
@@ -585,21 +588,6 @@
       parentField.parentNode.insertBefore(div, parentField.nextSibling);
     } else if (parentField) {
       parentField.parentNode.appendChild(div);
-    }
-
-    // แสดง photoSection เมื่อเลือก แจ้งทำความดี
-    const photoSec = document.getElementById("photoSection");
-    if (val === "แจ้งทำความดี") {
-      if (photoSec) {
-        photoSec.style.display = "block";
-        const title = document.getElementById("photoSectionTitle");
-        if (title) title.textContent = "📷 แนบรูปภาพ (กด + เพื่อเพิ่ม)";
-        if (document.getElementById("photoGrid").children.length === 0) addPhotoSlot();
-      }
-    } else {
-      // ซ่อน photoSection ถ้าเลือกอย่างอื่น (ยกเว้น topic ที่มี hasPhoto เอง)
-      const flow = FLOWS[TOPIC];
-      if (photoSec && !flow.hasPhoto) photoSec.style.display = "none";
     }
   }
 
@@ -1105,63 +1093,11 @@
 
   function renderFileSectionIfNeeded() {
     const flow = FLOWS[TOPIC];
-    if (flow && flow.hasPhoto) {
-      const sec = document.getElementById("photoSection");
-      sec.style.display = "block";
-      // แก้ title ตาม topic
-      const title = document.getElementById("photoSectionTitle");
-      if (title) title.textContent = "📷 แนบรูปภาพ (กด + เพื่อเพิ่ม)";
-      // เพิ่ม slot แรกอัตโนมัติ
-      if (document.getElementById("photoGrid").children.length === 0) addPhotoSlot();
-    }
     if (flow && flow.hasFile) {
       document.getElementById("fileSection").style.display = "block";
+      // เพิ่ม slot แรกอัตโนมัติ
       if (fileItems.length === 0) addFileSlot();
     }
-  }
-
-  // เพิ่ม photo slot แบบ dynamic
-  let photoSlotCount = 0;
-  function addPhotoSlot() {
-    photoSlotCount++;
-    const idx  = photoSlotCount;
-    const grid = document.getElementById("photoGrid");
-    const slot = document.createElement("div");
-    slot.className = "photo-slot";
-    slot.id = "pslot_" + idx;
-    slot.style.cssText = "position:relative;border:1.5px dashed var(--color-border-secondary);border-radius:var(--border-radius-md);aspect-ratio:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;cursor:pointer;overflow:hidden;background:var(--color-background-secondary);";
-    slot.innerHTML = '<i class="ti ti-camera" style="font-size:22px;color:var(--color-text-tertiary);" aria-hidden="true"></i>'
-      + '<span style="font-size:0.72rem;color:var(--color-text-tertiary);">รูปที่ ' + idx + '</span>'
-      + '<input type="file" accept="image/*" style="position:absolute;inset:0;opacity:0;cursor:pointer;" onchange="onPhotoSlotSelect(event,' + idx + ')">'
-      + '<button onclick="removePhotoSlot(' + idx + ')" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.5);color:white;border:none;border-radius:50%;width:22px;height:22px;font-size:12px;cursor:pointer;display:none;" class="remove-btn">✕</button>';
-    grid.appendChild(slot);
-    // เก็บ photoFiles ตาม idx
-    photoFiles[idx - 1] = null;
-  }
-
-  function onPhotoSlotSelect(event, idx) {
-    const file = event.target.files[0];
-    if (!file) return;
-    photoFiles[idx - 1] = file;
-    const slot = document.getElementById("pslot_" + idx);
-    if (!slot) return;
-    const reader = new FileReader();
-    reader.onload = function(e) {
-      slot.style.backgroundImage = "url(" + e.target.result + ")";
-      slot.style.backgroundSize = "cover";
-      slot.style.backgroundPosition = "center";
-      slot.querySelector('.ti-camera')?.remove();
-      slot.querySelector('span')?.remove();
-      const rmBtn = slot.querySelector('.remove-btn');
-      if (rmBtn) rmBtn.style.display = "block";
-    };
-    reader.readAsDataURL(file);
-  }
-
-  function removePhotoSlot(idx) {
-    photoFiles[idx - 1] = null;
-    const slot = document.getElementById("pslot_" + idx);
-    if (slot) slot.remove();
   }
 
   function addFileSlot() {
