@@ -780,7 +780,10 @@
 
     // อัปโหลดรูป (topic 3) — ใช้ JSONP เพื่อเลี่ยง CORS
     let photoLinks = [];
-    if (flow.hasPhoto) {
+    // อัปโหลดรูป: topic 3 (hasPhoto) หรือ topic 2 ที่เลือก แจ้งทำความดี
+    const shouldUploadPhoto = flow.hasPhoto || 
+      (TOPIC === "2" && answers["ประเภท"] === "แจ้งทำความดี");
+    if (shouldUploadPhoto) {
       const photos = photoFiles.filter(function(f) { return f !== null; });
       for (let i = 0; i < photos.length; i++) {
         document.getElementById("loadingText").textContent = "กำลังอัปโหลดรูป " + (i+1) + "/" + photos.length + "...";
