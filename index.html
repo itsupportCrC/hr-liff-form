@@ -757,11 +757,13 @@
       // เก็บค่า conditional field ถ้ามี
       if (field.conditional) {
         const condDef = field.conditional[val];
+        console.log("conditional field:", field.key, "val:", val, "condDef:", condDef ? condDef.type : "none");
         if (condDef) {
           if (condDef.type === "multi" && condDef.fields) {
             // multi fields
             condDef.fields.forEach(function(cf, ci) {
               const mEl = document.getElementById("fmc_" + i + "_" + ci);
+              console.log("fmc_" + i + "_" + ci + " =", mEl ? mEl.value : "NOT FOUND");
               if (mEl) answers[cf.key] = mEl.value.trim();
             });
           } else {
